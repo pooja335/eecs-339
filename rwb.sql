@@ -56,6 +56,27 @@ create table rwb_users (
 
 
 --
+-- list of one-time use codes and corresponding email addresses
+--
+CREATE TABLE rwb_invite_codes (
+--
+-- Must be a unique invite code that gets deleted after one use. 
+--
+  code VARCHAR(64) NOT NULL unique,
+--
+-- Must have an email address that the inviter used. Does not need
+-- to be unique, as in, two people can invite the same email. 
+--
+  email  VARCHAR(64) NOT NULL,
+--
+-- Must be a current user in the system
+--
+  referer  VARCHAR(64) NOT NULL references rwb_users(name)
+    ON DELETE cascade
+);
+
+
+--
 -- the list of things that a user can do on the system
 --
 CREATE TABLE rwb_actions (

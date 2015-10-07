@@ -45,27 +45,29 @@ UpdateMapById = function(id, tag) {
 // 
 // first, we slice the string into an array of strings, one per 
 // line / data item
-	var rows  = $("#"+id).html().split("\n");
 
-// then, for each line / data item
-	for (var i=0; i<rows.length; i++) {
-// we slice it into tab-delimited chunks (the fields)
-		var cols = rows[i].split("\t"),
-// grab specific fields like lat and long
-			lat = cols[0],
-			long = cols[1];
+if ($("#"+id).html()) {
+  	var rows  = $("#"+id).html().split("\n");
 
-// then add them to the map.   Here the "new google.maps.Marker"
-// creates the marker and adds it to the map at the lat/long position
-// and "markers.push" adds it to our list of markers so we can
-// delete it later 
-		markers.push(new google.maps.Marker({
-			map: map,
-			position: new google.maps.LatLng(lat,long),
-			title: tag+"\n"+cols.join("\n")
-		}));
+  // then, for each line / data item
+  	for (var i=0; i<rows.length; i++) {
+  // we slice it into tab-delimited chunks (the fields)
+  		var cols = rows[i].split("\t"),
+  // grab specific fields like lat and long
+  			lat = cols[0],
+  			long = cols[1];
 
-	}
+  // then add them to the map.   Here the "new google.maps.Marker"
+  // creates the marker and adds it to the map at the lat/long position
+  // and "markers.push" adds it to our list of markers so we can
+  // delete it later 
+  		markers.push(new google.maps.Marker({
+  			map: map,
+  			position: new google.maps.LatLng(lat,long),
+  			title: tag+"\n"+cols.join("\n")
+  		}));
+  	}
+  }
 },
 
 //
@@ -100,7 +102,7 @@ UpdateMap = function() {
 	UpdateMapById("committee_data","COMMITTEE");
 	//UpdateMapById("candidate_data","CANDIDATE");
 	//UpdateMapById("individual_data", "INDIVIDUAL");
-	//UpdateMapById("opinion_data","OPINION");
+	UpdateMapById("opinion_data","OPINION");
 
 // When we're done with the map update, we mark the color division as
 // Ready.
@@ -153,6 +155,14 @@ ViewShift = function() {
 // 
 // This *initiates* the request back to the server.  When it is done,
 // the browser will call us back at the function NewData (given above)
+
+
+// checks if opinions box is checked
+  var opinions = "";
+  if ($("input[type='checkbox'][name='opinions']").is(':checked')) {
+    opinions = ",opinions";
+  }
+
 	$.get("rwb.pl",
 		{
 			act:	"near",
@@ -161,7 +171,7 @@ ViewShift = function() {
 			latsw:	sw.lat(),
 			longsw:	sw.lng(),
 			format:	"raw",
-			what:	"committees,candidates"
+			what:	"committees,candidates" + opinions
 		}, NewData);
 },
 
@@ -180,6 +190,11 @@ Reposition = function(pos) {
 	map.setCenter(new google.maps.LatLng(lat,long));
 // ... and set our user's marker on the map to the new position
 	usermark.setPosition(new google.maps.LatLng(lat,long));
+
+// each time user moves map, update their position for opinion data form
+  $("input[type='hidden'][name='lat']").val(lat);
+  $("input[type='hidden'][name='long']").val(long);
+
 },
 
 
@@ -210,6 +225,10 @@ Start = function(location) {
 		position: new google.maps.LatLng(lat,long),
 		title: "You are here"});
 
+// set user's position for opinion data form
+  $("input[type='hidden'][name='lat']").val(lat);
+  $("input[type='hidden'][name='long']").val(long);
+
 // clear list of markers we added to map (none yet)
 // these markers are committees, candidates, etc
 	markers = [];
@@ -227,6 +246,9 @@ Start = function(location) {
 	google.maps.event.addListener(map,"bounds_changed",ViewShift);
 	google.maps.event.addListener(map,"center_changed",ViewShift);
 	google.maps.event.addListener(map,"zoom_changed",ViewShift);
+
+// when checkbox gets selected, update map
+  $("input[type='checkbox']").click(ViewShift);
 
 //
 // Finally, tell the browser that if the current location changes, it
