@@ -160,23 +160,12 @@ ViewShift = function() {
 // checks if opinions, individuals box is checked
 	var whatstring = "";
   	
-	if ($("input[type='checkbox'][name='committees']").is(':checked')) {
-    		whatstring = "committees";
-    		localStorage.committee = "true";
-  	}
-  	else 
-    		localStorage.committee = "";
-
 	if ($("input[type='checkbox'][name='candidates']").is(':checked')) {
-    		if (whatstring)
-			whatstring += ",candidates";
-		else
-			whatstring = "candidates";
-
-    		localStorage.individual = "true";
+    		whatstring = "candidates";
+    		localStorage.candidate = "true";
   	}
   	else 
-    		localStorage.individual = "";
+    		localStorage.candidate = "";
 
 	if ($("input[type='checkbox'][name='individuals']").is(':checked')) {
     		if (whatstring)
@@ -270,10 +259,6 @@ Start = function(location) {
   $("input[type='hidden'][name='long']").val(long);
 
 //remembers what data was checked on page reload
-  
-
-  if (localStorage.committee)
-    $("input[type='checkbox'][name='committees']").attr('checked','checked');
   if (localStorage.opinion) {
     $("input[type='checkbox'][name='opinions']").attr('checked','checked');
   }
