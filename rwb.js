@@ -100,8 +100,8 @@ UpdateMap = function() {
 // commented out...  Those might help with the project...
 //
 	UpdateMapById("committee_data","COMMITTEE");
-	//UpdateMapById("candidate_data","CANDIDATE");
-	//UpdateMapById("individual_data", "INDIVIDUAL");
+	UpdateMapById("candidate_data","CANDIDATE");
+	UpdateMapById("individual_data", "INDIVIDUAL");
 	UpdateMapById("opinion_data","OPINION");
 
 // When we're done with the map update, we mark the color division as
@@ -157,10 +157,28 @@ ViewShift = function() {
 // the browser will call us back at the function NewData (given above)
 
 
-// checks if opinions box is checked
-  var opinions = "";
+// checks if opinions, individuals box is checked
+  var whatstring = "";
   if ($("input[type='checkbox'][name='opinions']").is(':checked')) {
-    opinions = ",opinions";
+    whatstring += ",opinions";
+    localStorage.opinion = "true";
+  }
+  else {
+    localStorage.opinion = "";
+  }
+  if ($("input[type='checkbox'][name='individuals']").is(':checked')) {
+    whatstring += ",individuals";
+    localStorage.individual = "true";
+  }
+  else {
+    localStorage.individual = "";
+  }
+  if ($("input[type='checkbox'][name='candidates']").is(':checked')) {
+    whatstring += ",candidates";
+    localStorage.candidate = "true";
+  }
+  else {
+    localStorage.candidate = "";
   }
 
 	$.get("rwb.pl",
@@ -171,7 +189,7 @@ ViewShift = function() {
 			latsw:	sw.lat(),
 			longsw:	sw.lng(),
 			format:	"raw",
-			what:	"committees,candidates" + opinions
+			what:	"committees" + whatstring
 		}, NewData);
 },
 
@@ -228,6 +246,17 @@ Start = function(location) {
 // set user's position for opinion data form
   $("input[type='hidden'][name='lat']").val(lat);
   $("input[type='hidden'][name='long']").val(long);
+
+//remembers what data was checked on page reload
+  if (localStorage.opinion) {
+    $("input[type='checkbox'][name='opinions']").attr('checked','checked');
+  }
+  if (localStorage.individual) {
+    $("input[type='checkbox'][name='individuals']").attr('checked','checked');
+  }
+  if (localStorage.candidate) {
+    $("input[type='checkbox'][name='candidates']").attr('checked','checked');
+  }
 
 // clear list of markers we added to map (none yet)
 // these markers are committees, candidates, etc

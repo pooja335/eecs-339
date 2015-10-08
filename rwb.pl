@@ -345,14 +345,19 @@ if ($action eq "base") {
   #
   print "<div id=\"map\" style=\"width:100\%; height:80\%\"></div>";
   
+  # 
+  # creates checkboxes for opinions and individuals
+  print "<input type=\"checkbox\" name=\"opinions\">",
+    "<label>View opinion data?</label><br>";
+  print "<input type=\"checkbox\" name=\"individuals\">",
+    "<label>View individual data?</label><br>";
+  print "<input type=\"checkbox\" name=\"candidates\">",
+    "<label>View candidate data?</label><br>";
 
 
-  #creates and pre-populates form for submitting opinion data
+  #creates form for submitting opinion data
   #only creates this form if user is not anonymous
   if ($user ne "anon") { 
-    print "<input type=\"checkbox\" name=\"opinions\" value=\"-1\">",
-    "<label>View opinion data?</label><br>";
-
     print start_form(-name=>'GiveOpinionData'),
     p('What do you think the political "color" is at your current location?'),
     p('Select -1 for red, 0 for neutral, and +1 for blue.'),
