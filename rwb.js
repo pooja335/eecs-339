@@ -206,7 +206,7 @@ ViewShift = function() {
 	$("input[type='checkbox'][name='cycle']:checked").each(function(){
 		whatcycles.push($(this).attr('value'));
 	});
-  	whatcycles = String(whatcycles);
+  	whatcycles = whatcycles.toString();
 	//alert(whatcycles);
 	$.get("rwb.pl",
 		{

@@ -456,7 +456,7 @@ if ($action eq "near") {
    	if (!defined($cycle) or ($cycle="")){
 		$cycle = "1112";
 	}
-	print "<script>alert($cycle);</script>";
+	$cycle = "1112";
 
   if (!defined($whatparam) || $whatparam eq "all") { 
     %what = ( committees => 1, 
@@ -873,7 +873,7 @@ sub Committees {
 	@cycles = split(/\s*,\s*/,$cycle);
 	
   	eval { 
-    	@rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in?",undef,$latsw,$latne,$longsw,$longne,@cycles);
+    	@rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in (?)",undef,$latsw,$latne,$longsw,$longne,@cycles);
 	};
   
   	if ($@) { 
