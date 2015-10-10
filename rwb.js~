@@ -160,12 +160,23 @@ ViewShift = function() {
 // checks if opinions, individuals box is checked
 	var whatstring = "";
   	
-	if ($("input[type='checkbox'][name='candidates']").is(':checked')) {
-    		whatstring = "candidates";
-    		localStorage.candidate = "true";
+	if ($("input[type='checkbox'][name='committees']").is(':checked')) {
+    		whatstring = "committees";
+    		localStorage.committee = "true";
   	}
   	else 
-    		localStorage.candidate = "";
+    		localStorage.committee = "";
+
+	if ($("input[type='checkbox'][name='candidates']").is(':checked')) {
+    		if (whatstring)
+			whatstring += ",candidates";
+		else
+			whatstring = "candidates";
+
+    		localStorage.individual = "true";
+  	}
+  	else 
+    		localStorage.individual = "";
 
 	if ($("input[type='checkbox'][name='individuals']").is(':checked')) {
     		if (whatstring)
@@ -189,9 +200,14 @@ ViewShift = function() {
   	else 
     		localStorage.opinion = "";
   
-  	
-  
-
+// create string of cycles to get election data for
+	var whatcycles = [];
+	
+	$("input[type='checkbox'][name='cycle']:checked").each(function(){
+		whatcycles.push($(this).attr('value'));
+	});
+  	whatcycles = String(whatcycles);
+	alert(whatcycles);
 	$.get("rwb.pl",
 		{
 			act:	"near",
@@ -200,7 +216,8 @@ ViewShift = function() {
 			latsw:	sw.lat(),
 			longsw:	sw.lng(),
 			format:	"raw",
-			what:	whatstring
+			what:	whatstring,
+			cycle:  whatcycles
 		}, NewData);
 },
 
@@ -221,8 +238,8 @@ Reposition = function(pos) {
 	usermark.setPosition(new google.maps.LatLng(lat,long));
 
 // each time user moves map, update their position for opinion data form
-  $("input[type='hidden'][name='lat']").val(lat);
-  $("input[type='hidden'][name='long']").val(long);
+ 	$("input[type='hidden'][name='lat']").val(lat);
+ 	$("input[type='hidden'][name='long']").val(long);
 
 },
 
@@ -255,19 +272,20 @@ Start = function(location) {
 		title: "You are here"});
 
 // set user's position for opinion data form
-  $("input[type='hidden'][name='lat']").val(lat);
-  $("input[type='hidden'][name='long']").val(long);
+ 	$("input[type='hidden'][name='lat']").val(lat);
+ 	$("input[type='hidden'][name='long']").val(long);
 
 //remembers what data was checked on page reload
-  if (localStorage.opinion) {
-    $("input[type='checkbox'][name='opinions']").attr('checked','checked');
-  }
-  if (localStorage.individual) {
-    $("input[type='checkbox'][name='individuals']").attr('checked','checked');
-  }
-  if (localStorage.candidate) {
-    $("input[type='checkbox'][name='candidates']").attr('checked','checked');
-  }
+  
+
+ 	if (localStorage.committee)
+    		$("input[type='checkbox'][name='committees']").attr('checked','checked');
+  	if (localStorage.opinion)
+  	  	$("input[type='checkbox'][name='opinions']").attr('checked','checked');
+  	if (localStorage.individual)
+  	  	$("input[type='checkbox'][name='individuals']").attr('checked','checked');
+  	if (localStorage.candidate)
+    		$("input[type='checkbox'][name='candidates']").attr('checked','checked');
 
 // clear list of markers we added to map (none yet)
 // these markers are committees, candidates, etc
@@ -288,7 +306,7 @@ Start = function(location) {
 	google.maps.event.addListener(map,"zoom_changed",ViewShift);
 
 // when checkbox gets selected, update map
-  $("input[type='checkbox']").click(ViewShift);
+ 	$("input[type='checkbox']").click(ViewShift);
 
 //
 // Finally, tell the browser that if the current location changes, it

@@ -359,7 +359,7 @@ if ($action eq "base") {
 		     $dbpasswd,
 		     "select distinct cycle from cs339.committee_master order by cycle desc", "COL");
    foreach my $cyc (@cycles) {
-	print "<input type=\"checkbox\" name=\"$cyc\"> <label>$cyc</label> <br>";
+	print "<input type=\"checkbox\" name=\"cycle\" value=\"$cyc\"> <label>$cyc</label> <br>";
    }
 
 
@@ -443,17 +443,20 @@ if ($action eq "base") {
 #
 #
 if ($action eq "near") {
-  my $latne = param("latne");
-  my $longne = param("longne");
-  my $latsw = param("latsw");
-  my $longsw = param("longsw");
-  my $whatparam = param("what");
-  my $format = param("format");
-  my $cycle = param("cycle");
-  my %what;
+  	my $latne = param("latne");
+  	my $longne = param("longne");
+  	my $latsw = param("latsw");
+  	my $longsw = param("longsw");
+  	my $whatparam = param("what");
+  	my $format = param("format");
+ 	my $cycle = param("cycle");
+  	my %what;
   
-  $format = "table" if !defined($format);
-  $cycle = "1112" if !defined($cycle);
+  	$format = "table" if !defined($format);
+   	if (!defined($cycle) or ($cycle="")){
+		$cycle = "1112";
+	}
+	print "<script>alert($cycle);</script>";
 
   if (!defined($whatparam) || $whatparam eq "all") { 
     %what = ( committees => 1, 
@@ -864,23 +867,27 @@ print end_html;
 # $error false on success, error string on failure
 #
 sub Committees {
-  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
-  my @rows;
-  eval { 
-    @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where cycle=? and latitude>? and latitude<? and longitude>? and longitude<?",undef,$cycle,$latsw,$latne,$longsw,$longne);
-  };
+	my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+	my @rows;
+	my @cycles;
+	@cycles = split(/\s*,\s*/,$cycle);
+	
+  	eval { 
+    	@rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in?",undef,$latsw,$latne,$longsw,$longne,@cycles);
+	};
   
-  if ($@) { 
-    return (undef,$@);
-  } else {
-    if ($format eq "table") { 
-      return (MakeTable("committee_data","2D",
-			["latitude", "longitude", "name", "party", "street1", "street2", "city", "state", "zip"],
-			@rows),$@);
-    } else {
-      return (MakeRaw("committee_data","2D",@rows),$@);
-    }
-  }
+  	if ($@) { 
+    		return (undef,$@);
+  	} else {
+    		if ($format eq "table") { 
+      			return (MakeTable("committee_data","2D",
+					  ["latitude", "longitude", "name", "party", "street1", "street2", 
+					  "city", "state", "zip"],
+				@rows),$@);
+    		} else {
+      			return (MakeRaw("committee_data","2D",@rows),$@);
+    		}
+  	}
 }
 
 
