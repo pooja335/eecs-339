@@ -543,10 +543,14 @@ if ($action eq "aggregate") {
     map {$what{$_}=1} split(/\s*,\s*/,$whatparam);
   }
          
+
   if ($what{committees}) { 
+
     # INSERT SQL SUBROUTINE HERE
-    my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
-    print $rows[0];
+    my ($str,$error) = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+    # if (!$error) {
+    #   print $str;
+    # }
   }
   if ($what{individuals}) {
     # INSERT SQL SUBROUTINE HERE
