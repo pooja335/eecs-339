@@ -173,10 +173,10 @@ ViewShift = function() {
 		else
 			whatstring = "candidates";
 
-    		localStorage.individual = "true";
+    		localStorage.candidate = "true";
   	}
   	else 
-    		localStorage.individual = "";
+    		localStorage.candidate = "";
 
 	if ($("input[type='checkbox'][name='individuals']").is(':checked')) {
     		if (whatstring)
@@ -184,10 +184,10 @@ ViewShift = function() {
 		else
 			whatstring = "individuals";
 
-    		localStorage.individual = "true";
+		localStorage.individual = "true";
   	}
   	else 
-    		localStorage.individual = "";
+  		localStorage.individual = "";
 
 	if ($("input[type='checkbox'][name='opinions']").is(':checked')) {
     		if (whatstring)
@@ -207,7 +207,7 @@ ViewShift = function() {
 		whatcycles.push($(this).attr('value'));
 	});
   	whatcycles = whatcycles.toString();
-	//alert(whatcycles);
+
 	$.get("rwb.pl",
 		{
 			act:	"near",
@@ -276,8 +276,6 @@ Start = function(location) {
  	$("input[type='hidden'][name='long']").val(long);
 
 //remembers what data was checked on page reload
-  
-
  	if (localStorage.committee)
     		$("input[type='checkbox'][name='committees']").attr('checked','checked');
   	if (localStorage.opinion)

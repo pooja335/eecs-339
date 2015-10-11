@@ -350,10 +350,10 @@ if ($action eq "base") {
   print "<input type=\"checkbox\" name=\"committees\"> <label>View committee data?</label> <br>"; 
   print "<input type=\"checkbox\" name=\"candidates\"> <label>View candidate data?</label> <br>";  
   print "<input type=\"checkbox\" name=\"individuals\"> <label>View individual data?</label> <br>";
-  print "<input type=\"checkbox\" name=\"opinions\"> <label>View opinion data?</label> <br> <br>";
+  print "<input type=\"checkbox\" name=\"opinions\"> <label>View opinion data?</label> <br>";
 
   #make cycle checkboxes
-  print "<h4>Choose election cycles:</h4> <br>";
+  print "<h4>Choose election cycles:</h4>";
   my @cycles;
    @cycles = ExecSQL($dbuser,
 		     $dbpasswd,
@@ -449,14 +449,13 @@ if ($action eq "near") {
   	my $longsw = param("longsw");
   	my $whatparam = param("what");
   	my $format = param("format");
- 	my $cycle = param("cycle");
+ 	  my $cycle = param("cycle");
   	my %what;
-  
+
   	$format = "table" if !defined($format);
-   	if (!defined($cycle) or ($cycle="")){
-		$cycle = "1112";
-	}
-	$cycle = "1112";
+   	if (!defined($cycle) or ($cycle=="")){
+		  $cycle = "1112";
+	  }
 
   if (!defined($whatparam) || $whatparam eq "all") { 
     %what = ( committees => 1, 
@@ -871,9 +870,11 @@ sub Committees {
 	my @rows;
 	my @cycles;
 	@cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
 	
   	eval { 
-    	@rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in (?)",undef,$latsw,$latne,$longsw,$longne,@cycles);
+    	@rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cmte_nm, cmte_pty_affiliation, cmte_st1, cmte_st2, cmte_city, cmte_st, cmte_zip from cs339.committee_master natural join cs339.cmte_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in ($in)",undef,$latsw,$latne,$longsw,$longne,@cycles);
 	};
   
   	if ($@) { 
@@ -899,8 +900,13 @@ sub Committees {
 sub Candidates {
   my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
   my @rows;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+
   eval { 
-    @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cand_name, cand_pty_affiliation, cand_st1, cand_st2, cand_city, cand_st, cand_zip from cs339.candidate_master natural join cs339.cand_id_to_geo where cycle=? and latitude>? and latitude<? and longitude>? and longitude<?",undef,$cycle,$latsw,$latne,$longsw,$longne);
+    @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, cand_name, cand_pty_affiliation, cand_st1, cand_st2, cand_city, cand_st, cand_zip from cs339.candidate_master natural join cs339.cand_id_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in ($in)",undef,$latsw,$latne,$longsw,$longne,@cycles);
   };
   
   if ($@) { 
@@ -928,8 +934,13 @@ sub Candidates {
 sub Individuals {
   my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
   my @rows;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+
   eval { 
-    @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, name, city, state, zip_code, employer, transaction_amnt from cs339.individual natural join cs339.ind_to_geo where cycle=? and latitude>? and latitude<? and longitude>? and longitude<?",undef,$cycle,$latsw,$latne,$longsw,$longne);
+    @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, name, city, state, zip_code, employer, transaction_amnt from cs339.individual natural join cs339.ind_to_geo where latitude>? and latitude<? and longitude>? and longitude<? and cycle in ($in)",undef,$latsw,$latne,$longsw,$longne,@cycles);
   };
   
   if ($@) { 
@@ -955,6 +966,7 @@ sub Individuals {
 sub Opinions {
   my ($latne, $longne, $latsw, $longsw, $cycle,$format) = @_;
   my @rows;
+
   eval { 
     @rows = ExecSQL($dbuser, $dbpasswd, "select latitude, longitude, color from rwb_opinions where latitude>? and latitude<? and longitude>? and longitude<?",undef,$latsw,$latne,$longsw,$longne);
   };
