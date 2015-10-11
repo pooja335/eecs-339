@@ -136,7 +136,7 @@ NewData = function(data) {
 // The Google Map calls us back at ViewShift when some aspect
 // of the map changes (for example its bounds, zoom, etc)
 //
-ViewShift = function() {
+ViewShift = function(is_aggregate) {
 // We determine the new bounds of the map
 	var bounds = map.getBounds(),
 		ne = bounds.getNorthEast(),
@@ -208,7 +208,24 @@ ViewShift = function() {
 	});
   	whatcycles = whatcycles.toString();
 
-	$.get("rwb.pl",
+//checks to see if aggregate function should get called, or near
+	if (is_aggregate) {
+		$.get("rwb.pl",
+		{
+			act:	"aggregate",
+			latne:	ne.lat(),
+			longne:	ne.lng(),
+			latsw:	sw.lat(),
+			longsw:	sw.lng(),
+			format:	"raw",
+			what:	whatstring,
+			cycle:  whatcycles
+		}, function(data) {
+			$("#summary").html(data);
+		});
+	} 
+	else {
+		$.get("rwb.pl",
 		{
 			act:	"near",
 			latne:	ne.lat(),
@@ -219,7 +236,9 @@ ViewShift = function() {
 			what:	whatstring,
 			cycle:  whatcycles
 		}, NewData);
+	}	
 },
+
 
 
 //
@@ -277,13 +296,13 @@ Start = function(location) {
 
 //remembers what data was checked on page reload
  	if (localStorage.committee)
-    		$("input[type='checkbox'][name='committees']").attr('checked','checked');
+		$("input[type='checkbox'][name='committees']").attr('checked','checked');
   	if (localStorage.opinion)
   	  	$("input[type='checkbox'][name='opinions']").attr('checked','checked');
   	if (localStorage.individual)
   	  	$("input[type='checkbox'][name='individuals']").attr('checked','checked');
   	if (localStorage.candidate)
-    		$("input[type='checkbox'][name='candidates']").attr('checked','checked');
+		$("input[type='checkbox'][name='candidates']").attr('checked','checked');
 
 // clear list of markers we added to map (none yet)
 // these markers are committees, candidates, etc
@@ -305,6 +324,9 @@ Start = function(location) {
 
 // when checkbox gets selected, update map
  	$("input[type='checkbox']").click(ViewShift);
+
+// when aggregate gets clicked, calculate aggregate
+	$("button#aggregate").click(function() { ViewShift(true); });
 
 //
 // Finally, tell the browser that if the current location changes, it

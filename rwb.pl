@@ -377,13 +377,18 @@ if ($action eq "base") {
     hidden(-name=>'lat'),
     hidden(-name=>'long'),
     submit,
-    end_form,
-    hr;
+    end_form;
   } 
 
+  # button to calculate aggregate data - not in near because too slow
+  print "<button id=\"aggregate\">Calculate summary</button>";
+
+  # summary div where summary goes
+  print "<div id=\"summary\" style=\:width:100\%;></div>";  
+
+  # 
 
 # height=1024 width=1024 id=\"info\" name=\"info\" onload=\"UpdateMap()\"></iframe>";
-  
 
   #
   # User mods
@@ -506,6 +511,56 @@ if ($action eq "near") {
 	print $str;
       }
     }
+  }
+}
+
+# 
+# 
+# pretty much the same thing as near, except prints summary statistics
+# also does different sql calls than near
+# aggregate this isn't in near because it is too slow 
+if ($action eq "aggregate") {
+    my $latne = param("latne");
+    my $longne = param("longne");
+    my $latsw = param("latsw");
+    my $longsw = param("longsw");
+    my $whatparam = param("what");
+    my $format = param("format");
+    my $cycle = param("cycle");
+    my %what;
+
+    $format = "table" if !defined($format);
+    if (!defined($cycle) or ($cycle=="")){
+      $cycle = "1112";
+    }
+
+  if (!defined($whatparam) || $whatparam eq "all") { 
+    %what = ( committees => 1, 
+        candidates => 1,
+        individuals =>1,
+        opinions => 1);
+  } else {
+    map {$what{$_}=1} split(/\s*,\s*/,$whatparam);
+  }
+         
+  if ($what{committees}) { 
+    # INSERT SQL SUBROUTINE HERE
+    my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+    print $rows[0];
+  }
+  if ($what{individuals}) {
+    # INSERT SQL SUBROUTINE HERE
+    # my ($str,$error) = Individuals($latne,$longne,$latsw,$longsw,$cycle,$format);
+    # if (!$error) {
+    #   print $str;
+    # }
+  }
+  if ($what{opinions}) {
+    # INSERT SQL SUBROUTINE HERE
+    # my ($str,$error) = Opinions($latne,$longne,$latsw,$longsw,$cycle,$format);
+    # if (!$error) {
+    #   print $str;
+    # }
   }
 }
 
@@ -982,6 +1037,30 @@ sub Opinions {
       return (MakeRaw("opinion_data","2D",@rows),$@);
     }
   }
+}
+
+#
+# Get aggregate committee data
+#
+sub SummarizeCommittees {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @rows;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+  
+    eval { 
+      @rows = ExecSQL($dbuser, $dbpasswd, "SELECT cs339.candidate_master.cand_pty_affiliation, SUM(cs339.comm_to_cand.transaction_amnt + cs339.comm_to_comm.transaction_amnt) FROM cs339.comm_to_comm INNER JOIN cs339.comm_to_cand ON (cs339.comm_to_comm.cmte_id=cs339.comm_to_cand.cmte_id AND cs339.comm_to_comm.cycle=cs339.comm_to_cand.cycle) INNER JOIN cs339.candidate_master ON (cs339.comm_to_cand.cand_id= cs339.candidate_master.cand_id AND cs339.comm_to_cand.cycle= cs339.candidate_master.cycle) INNER JOIN cs339.cmte_id_to_geo ON (cs339.comm_to_comm.cmte_id = cs339.cmte_id_to_geo.cmte_id) WHERE latitude>? and latitude<? and longitude>? AND longitude<? AND cs339.candidate_master.cand_pty_affiliation IN ('REP','DEM') AND cs339.comm_to_comm.cycle IN ($in) group by cs339.candidate_master.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
+  };
+    # print "<h2>HELLOOOO $rows[0] </h2>";
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @rows;
+        # return (MakeRaw("committee_data","2D",@rows),$@);
+    }
 }
 
 
