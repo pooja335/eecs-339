@@ -543,14 +543,26 @@ if ($action eq "aggregate") {
     map {$what{$_}=1} split(/\s*,\s*/,$whatparam);
   }
          
-  print "<h1>MUAHAHAHAHHAHAHAAH</h1>";
   if ($what{committees}) { 
-
     # INSERT SQL SUBROUTINE HERE
-    # my ($str,$error) = Committees($latne,$longne,$latsw,$longsw,$cycle,$format);
-    # if (!$error) {
-    #   print $str;
-    # }
+    my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+    my $difference = $rows[0][1] - $rows[1][1];
+    if ($difference < 0) {
+      print "<div style=\"background-color: red;\">";
+    }
+    else {
+      print "<div style=\"background-color: dodgerblue;\">";
+    }
+    print "<hr><h4>Total money given by committees:</h4>";
+    print "<p> To Democrats: \$$rows[0][1]</p>";
+    print "<p> To Republicans: \$$rows[1][1]</p>";
+    if ($difference < 0) {
+      $difference *= -1;
+      print "<p><strong>Difference: \$$difference more given to Republicans</strong></p><hr></div>";
+    }
+    else {
+      print "<p><strong>Difference: \$$difference more given to Democrats</strong></p><hr></div>";
+    }
   }
   if ($what{individuals}) {
     # INSERT SQL SUBROUTINE HERE
@@ -1041,6 +1053,29 @@ sub Opinions {
       return (MakeRaw("opinion_data","2D",@rows),$@);
     }
   }
+}
+
+#
+# Get aggregate committee data
+#
+sub SummarizeCommittees {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @rows;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+  
+    eval { 
+      @rows = ExecSQL($dbuser, $dbpasswd, "SELECT cs339.candidate_master.cand_pty_affiliation, SUM(cs339.comm_to_cand.transaction_amnt + cs339.comm_to_comm.transaction_amnt) AS contributions FROM cs339.comm_to_comm INNER JOIN cs339.comm_to_cand ON (cs339.comm_to_comm.cmte_id=cs339.comm_to_cand.cmte_id AND cs339.comm_to_comm.cycle=cs339.comm_to_cand.cycle) INNER JOIN cs339.candidate_master ON (cs339.comm_to_cand.cand_id= cs339.candidate_master.cand_id AND cs339.comm_to_cand.cycle= cs339.candidate_master.cycle) INNER JOIN cs339.cmte_id_to_geo ON (cs339.comm_to_comm.cmte_id = cs339.cmte_id_to_geo.cmte_id) WHERE latitude>? and latitude<? and longitude>? AND longitude<? AND cs339.candidate_master.cand_pty_affiliation IN ('REP','DEM') AND cs339.comm_to_comm.cycle IN ($in) GROUP BY cs339.candidate_master.cand_pty_affiliation ORDER BY cs339.candidate_master.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
+  };
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @rows;
+        # return (MakeRaw("committee_summary","2D",@rows),$@);
+    }
 }
 
 

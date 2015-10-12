@@ -136,7 +136,7 @@ NewData = function(data) {
 // The Google Map calls us back at ViewShift when some aspect
 // of the map changes (for example its bounds, zoom, etc)
 //
-ViewShift = function(is_aggregate) {
+ViewShift = function(e,is_aggregate) {
 // We determine the new bounds of the map
 	var bounds = map.getBounds(),
 		ne = bounds.getNorthEast(),
@@ -207,7 +207,7 @@ ViewShift = function(is_aggregate) {
 		whatcycles.push($(this).attr('value'));
 	});
   	whatcycles = whatcycles.toString();
-
+  	console.log(is_aggregate);
 //checks to see if aggregate function should get called, or near
 	if (is_aggregate) {
 		$.get("rwb.pl",
@@ -326,7 +326,7 @@ Start = function(location) {
  	$("input[type='checkbox']").click(ViewShift);
 
 // when aggregate gets clicked, calculate aggregate
-	$("button#aggregate").click(function() { ViewShift(true); });
+	$("button#aggregate").click(function(e) { ViewShift(e,true); });
 
 //
 // Finally, tell the browser that if the current location changes, it
