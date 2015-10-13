@@ -544,9 +544,30 @@ if ($action eq "aggregate") {
   }
          
   if ($what{committees}) { 
-    # INSERT SQL SUBROUTINE HERE
+
+    # increasingly larger area until enough data
     my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
-    my $difference = $rows[0][1] - $rows[1][1];
+    my $count = $rows[0][0] + $rows[0][1] + $rows[0][2];
+    my $centerlat = ($latne + $latsw)/2;
+    my $latdist;
+    my $centerlong = ($longne + $longsw)/2;
+    my $longdist;
+    while ($count < 30) {
+      $latdist = ($latne - $latsw)/2;
+      $longdist = ($longne - $longsw)/2;
+      $latne = $centerlat + $latdist * 1.5;
+      $latsw = $centerlat - $latdist * 1.5;
+      $longne = $centerlong + $longdist * 1.5;
+      $longsw = $centerlong - $longdist * 1.5;
+      @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+      $count = $rows[0][0] + $rows[0][1] + $rows[0][2];
+
+      # THIS LINE IS ONLY FOR DEBUGGING - DELETE WHEN TURNING IN
+      print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
+    }
+
+    # calculates summary statistics
+    my $difference = $rows[0][2] - $rows[1][2];
     if ($difference < 0) {
       print "<div style=\"background-color: red;\">";
     }
@@ -554,8 +575,8 @@ if ($action eq "aggregate") {
       print "<div style=\"background-color: dodgerblue;\">";
     }
     print "<hr><h4>Total money given by committees:</h4>";
-    print "<p> To Democrats: \$$rows[0][1]</p>";
-    print "<p> To Republicans: \$$rows[1][1]</p>";
+    print $rows[0][2] > 0 ? "<p> To Democrats: \$$rows[0][2]</p>" : "<p> To Democrats: $0</p>";
+    print $rows[1][2] > 0 ? "<p> To Republicans: \$$rows[1][2]</p>" : "<p> To Republicans: $0</p>";
     if ($difference < 0) {
       $difference *= -1;
       print "<p><strong>Difference: \$$difference more given to Republicans</strong></p><hr></div>";
@@ -1067,7 +1088,7 @@ sub SummarizeCommittees {
   my $in = '?' . (',?' x ($size - 1));
   
     eval { 
-      @rows = ExecSQL($dbuser, $dbpasswd, "SELECT cs339.candidate_master.cand_pty_affiliation, SUM(cs339.comm_to_cand.transaction_amnt + cs339.comm_to_comm.transaction_amnt) AS contributions FROM cs339.comm_to_comm INNER JOIN cs339.comm_to_cand ON (cs339.comm_to_comm.cmte_id=cs339.comm_to_cand.cmte_id AND cs339.comm_to_comm.cycle=cs339.comm_to_cand.cycle) INNER JOIN cs339.candidate_master ON (cs339.comm_to_cand.cand_id= cs339.candidate_master.cand_id AND cs339.comm_to_cand.cycle= cs339.candidate_master.cycle) INNER JOIN cs339.cmte_id_to_geo ON (cs339.comm_to_comm.cmte_id = cs339.cmte_id_to_geo.cmte_id) WHERE latitude>? and latitude<? and longitude>? AND longitude<? AND cs339.candidate_master.cand_pty_affiliation IN ('REP','DEM') AND cs339.comm_to_comm.cycle IN ($in) GROUP BY cs339.candidate_master.cand_pty_affiliation ORDER BY cs339.candidate_master.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
+      @rows = ExecSQL($dbuser, $dbpasswd, "SELECT count(*) AS count, cs339.candidate_master.cand_pty_affiliation, SUM(cs339.comm_to_cand.transaction_amnt + cs339.comm_to_comm.transaction_amnt) AS contributions FROM cs339.comm_to_comm INNER JOIN cs339.comm_to_cand ON (cs339.comm_to_comm.cmte_id=cs339.comm_to_cand.cmte_id AND cs339.comm_to_comm.cycle=cs339.comm_to_cand.cycle) INNER JOIN cs339.candidate_master ON (cs339.comm_to_cand.cand_id= cs339.candidate_master.cand_id AND cs339.comm_to_cand.cycle= cs339.candidate_master.cycle) INNER JOIN cs339.cmte_id_to_geo ON (cs339.comm_to_comm.cmte_id = cs339.cmte_id_to_geo.cmte_id) WHERE latitude>? and latitude<? and longitude>? AND longitude<? AND cs339.candidate_master.cand_pty_affiliation IN ('REP','DEM') AND cs339.comm_to_comm.cycle IN ($in) GROUP BY cs339.candidate_master.cand_pty_affiliation ORDER BY cs339.candidate_master.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
   };
   
     if ($@) { 
