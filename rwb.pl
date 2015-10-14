@@ -77,8 +77,8 @@ use Time::ParseDate;
 #
 # You need to override these for access to your database
 #
-my $dbuser="jbl851";
-my $dbpasswd="zjN9kY3lt";
+my $dbuser="pps860";
+my $dbpasswd="zaM7in9Wf";
 
 
 #
@@ -520,10 +520,6 @@ if ($action eq "near") {
 # also does different sql calls than near
 # aggregate this isn't in near because it is too slow 
 if ($action eq "aggregate") {
-    my $latne = param("latne");
-    my $longne = param("longne");
-    my $latsw = param("latsw");
-    my $longsw = param("longsw");
     my $whatparam = param("what");
     my $format = param("format");
     my $cycle = param("cycle");
@@ -544,10 +540,14 @@ if ($action eq "aggregate") {
   }
          
   if ($what{committees}) { 
+    my $latne = param("latne");
+    my $longne = param("longne");
+    my $latsw = param("latsw");
+    my $longsw = param("longsw");
 
     # increasingly larger area until enough data
-    my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
-    my $count = $rows[0][0] + $rows[0][1] + $rows[0][2];
+    my @count = CountCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+    my $count = $count[0][0]; 
     my $centerlat = ($latne + $latsw)/2;
     my $latdist;
     my $centerlong = ($longne + $longsw)/2;
@@ -559,24 +559,27 @@ if ($action eq "aggregate") {
       $latsw = $centerlat - $latdist * 1.5;
       $longne = $centerlong + $longdist * 1.5;
       $longsw = $centerlong - $longdist * 1.5;
-      @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
-      $count = $rows[0][0] + $rows[0][1] + $rows[0][2];
+      @count = CountCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+      $count = $count[0][0];
 
       # THIS LINE IS ONLY FOR DEBUGGING - DELETE WHEN TURNING IN
-      print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
+      # print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
     }
 
+    # gets summary data for large enough area
+    my @rows = SummarizeCommittees($latne,$longne,$latsw,$longsw,$cycle,$format);
+
     # calculates summary statistics
-    my $difference = $rows[0][2] - $rows[1][2];
+    my $difference = $rows[0][1] - $rows[1][1];
     if ($difference < 0) {
       print "<div style=\"background-color: red;\">";
     }
     else {
       print "<div style=\"background-color: dodgerblue;\">";
     }
-    print "<hr><h4>Total money given by committees:</h4>";
-    print $rows[0][2] > 0 ? "<p> To Democrats: \$$rows[0][2]</p>" : "<p> To Democrats: $0</p>";
-    print $rows[1][2] > 0 ? "<p> To Republicans: \$$rows[1][2]</p>" : "<p> To Republicans: $0</p>";
+    print "<hr><h3>Committee Summary</h3><h4>Total money given by committees:</h4>";
+    print $rows[0][1] > 0 ? "<p> To Democrats: \$$rows[0][1]</p>" : "<p> To Democrats: $0</p>";
+    print $rows[1][1] > 0 ? "<p> To Republicans: \$$rows[1][1]</p>" : "<p> To Republicans: $0</p>";
     if ($difference < 0) {
       $difference *= -1;
       print "<p><strong>Difference: \$$difference more given to Republicans</strong></p><hr></div>";
@@ -585,19 +588,102 @@ if ($action eq "aggregate") {
       print "<p><strong>Difference: \$$difference more given to Democrats</strong></p><hr></div>";
     }
   }
-  if ($what{individuals}) {
-    # INSERT SQL SUBROUTINE HERE
-    # my ($str,$error) = Individuals($latne,$longne,$latsw,$longsw,$cycle,$format);
-    # if (!$error) {
-    #   print $str;
-    # }
+  if ($what{individuals}) { 
+    my $latne = param("latne");
+    my $longne = param("longne");
+    my $latsw = param("latsw");
+    my $longsw = param("longsw");
+
+    # increasingly larger area until enough data
+    my @count = CountIndividuals($latne,$longne,$latsw,$longsw,$cycle,$format);
+    my $count = $count[0][0]; 
+    my $centerlat = ($latne + $latsw)/2;
+    my $latdist;
+    my $centerlong = ($longne + $longsw)/2;
+    my $longdist;
+    while ($count < 30) {
+      $latdist = ($latne - $latsw)/2;
+      $longdist = ($longne - $longsw)/2;
+      $latne = $centerlat + $latdist * 1.5;
+      $latsw = $centerlat - $latdist * 1.5;
+      $longne = $centerlong + $longdist * 1.5;
+      $longsw = $centerlong - $longdist * 1.5;
+      @count = CountIndividuals($latne,$longne,$latsw,$longsw,$cycle,$format);
+      $count = $count[0][0];
+
+      # THIS LINE IS ONLY FOR DEBUGGING - DELETE WHEN TURNING IN
+      # print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
+    }
+
+    # gets summary data for large enough area
+    my @rows = SummarizeIndividuals($latne,$longne,$latsw,$longsw,$cycle,$format);
+
+    # calculates summary statistics
+    my $difference = $rows[0][1] - $rows[1][1];
+    if ($difference < 0) {
+      print "<div style=\"background-color: red;\">";
+    }
+    else {
+      print "<div style=\"background-color: dodgerblue;\">";
+    }
+    print "<hr><h3>Individual Summary</h3><h4>Total money given by individuals:</h4>";
+    print $rows[0][1] > 0 ? "<p> To Democrats: \$$rows[0][1]</p>" : "<p> To Democrats: $0</p>";
+    print $rows[1][1] > 0 ? "<p> To Republicans: \$$rows[1][1]</p>" : "<p> To Republicans: $0</p>";
+    if ($difference < 0) {
+      $difference *= -1;
+      print "<p><strong>Difference: \$$difference more given to Republicans</strong></p><hr></div>";
+    }
+    else {
+      print "<p><strong>Difference: \$$difference more given to Democrats</strong></p><hr></div>";
+    }
   }
-  if ($what{opinions}) {
-    # INSERT SQL SUBROUTINE HERE
-    # my ($str,$error) = Opinions($latne,$longne,$latsw,$longsw,$cycle,$format);
-    # if (!$error) {
-    #   print $str;
-    # }
+  if ($what{opinions}) { 
+    my $latne = param("latne");
+    my $longne = param("longne");
+    my $latsw = param("latsw");
+    my $longsw = param("longsw");
+
+    # increasingly larger area until enough data
+    my @count = CountOpinions($latne,$longne,$latsw,$longsw,$format);
+    my $count = $count[0][0]; 
+    my $centerlat = ($latne + $latsw)/2;
+    my $latdist;
+    my $centerlong = ($longne + $longsw)/2;
+    my $longdist;
+    my $num_expansions=0;
+    while ($count < 30 && $num_expansions < 10) {
+      $latdist = ($latne - $latsw)/2;
+      $longdist = ($longne - $longsw)/2;
+      $latne = $centerlat + $latdist * 1.5;
+      $latsw = $centerlat - $latdist * 1.5;
+      $longne = $centerlong + $longdist * 1.5;
+      $longsw = $centerlong - $longdist * 1.5;
+      @count = CountOpinions($latne,$longne,$latsw,$longsw,$cycle,$format);
+      $count = $count[0][0];
+      $num_expansions += 1;
+
+      # THIS LINE IS ONLY FOR DEBUGGING - DELETE WHEN TURNING IN
+      # print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
+    }
+
+    # gets summary data for large enough area
+    my @rows = SummarizeOpinions($latne,$longne,$latsw,$longsw,$format);
+
+    # calculates summary statistics
+    my $average = $rows[0][0];
+    my $stnddev = $rows[0][1];
+    if ($average < 0) {
+      print "<div style=\"background-color: red;\">";
+    }
+    elsif ($average > 0) {
+      print "<div style=\"background-color: dodgerblue;\">";
+    }
+    else {
+      print "<div style=\"background-color: #d8d8d8;\">";
+    }
+    print "<br><h3>Opinion Summary</h3><p>Number of opinions: $count</p>";
+    print "<p>Average opinion data (+1 = blue, -1 = red): $average</p>";
+    print "<p>Standard deviation of opinion data: $stnddev</p><hr></div>";
   }
 }
 
@@ -1077,6 +1163,28 @@ sub Opinions {
 }
 
 #
+# Count if we have enough committee data for aggregate
+#
+sub CountCommittees {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @count;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+  
+    eval { 
+      @count = ExecSQL($dbuser, $dbpasswd, "SELECT COUNT(cmte_id) AS data_points FROM cs339.cmte_id_to_geo NATURAL JOIN cs339.committee_master WHERE latitude>? AND latitude<? AND longitude>? AND longitude<? AND cycle IN ($in)",undef,$latsw,$latne,$longsw,$longne,@cycles);
+  };
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @count;
+    }
+}
+
+#
 # Get aggregate committee data
 #
 sub SummarizeCommittees {
@@ -1088,14 +1196,95 @@ sub SummarizeCommittees {
   my $in = '?' . (',?' x ($size - 1));
   
     eval { 
-      @rows = ExecSQL($dbuser, $dbpasswd, "SELECT count(*) AS count, cs339.candidate_master.cand_pty_affiliation, SUM(cs339.comm_to_cand.transaction_amnt + cs339.comm_to_comm.transaction_amnt) AS contributions FROM cs339.comm_to_comm INNER JOIN cs339.comm_to_cand ON (cs339.comm_to_comm.cmte_id=cs339.comm_to_cand.cmte_id AND cs339.comm_to_comm.cycle=cs339.comm_to_cand.cycle) INNER JOIN cs339.candidate_master ON (cs339.comm_to_cand.cand_id= cs339.candidate_master.cand_id AND cs339.comm_to_cand.cycle= cs339.candidate_master.cycle) INNER JOIN cs339.cmte_id_to_geo ON (cs339.comm_to_comm.cmte_id = cs339.cmte_id_to_geo.cmte_id) WHERE latitude>? and latitude<? and longitude>? AND longitude<? AND cs339.candidate_master.cand_pty_affiliation IN ('REP','DEM') AND cs339.comm_to_comm.cycle IN ($in) GROUP BY cs339.candidate_master.cand_pty_affiliation ORDER BY cs339.candidate_master.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
-  };
+      @rows = ExecSQL($dbuser, $dbpasswd,  "SELECT cand.cand_pty_affiliation AS party, SUM(coca.transaction_amnt + cc.transaction_amnt) AS contributions FROM (SELECT cmte_id FROM cs339.cmte_id_to_geo WHERE latitude>? AND latitude<? AND longitude>? AND longitude<?) cir INNER JOIN cs339.comm_to_comm cc ON (cir.cmte_id=cc.cmte_id) INNER JOIN cs339.comm_to_cand coca ON (cc.cmte_id=coca.cmte_id AND cc.cycle=coca.cycle) INNER JOIN cs339.candidate_master cand ON (coca.cand_id= cand.cand_id AND coca.cycle= cand.cycle) WHERE cand.cand_pty_affiliation IN ('REP','DEM') AND cand.cycle IN ($in) GROUP BY cand.cand_pty_affiliation ORDER BY cand.cand_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
+        };
   
     if ($@) { 
         return (undef,$@);
     } else {
         return @rows;
-        # return (MakeRaw("committee_summary","2D",@rows),$@);
+    }
+}
+
+#
+# Count if we have enough Individual data for aggregate
+#
+sub CountIndividuals {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @count;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+
+    eval { 
+      @count = ExecSQL($dbuser, $dbpasswd, "SELECT count(sub_id) FROM (SELECT sub_id FROM cs339.ind_to_geo WHERE latitude>? AND latitude<? AND longitude>? AND longitude<?) NATURAL JOIN cs339.individual WHERE cycle IN ($in)",undef,$latsw,$latne,$longsw,$longne,@cycles);
+    };
+
+    
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @count;
+    }
+}
+
+#
+# Get aggregate Individual data
+#
+sub SummarizeIndividuals {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @rows;
+  my @cycles;
+  @cycles = split(/\s*,\s*/,$cycle);
+  my $size = @cycles;
+  my $in = '?' . (',?' x ($size - 1));
+  
+    eval { 
+      @rows = ExecSQL($dbuser, $dbpasswd,  "SELECT cmte.cmte_pty_affiliation AS Party, SUM(ind.transaction_amnt) AS Contributions FROM (SELECT sub_id FROM cs339.ind_to_geo WHERE latitude>? AND latitude<? AND longitude>? AND longitude<?) iir INNER  JOIN cs339.individual ind ON iir.sub_id=ind.sub_id INNER JOIN cs339.committee_master cmte ON ind.cmte_id=cmte.cmte_id WHERE cmte.cmte_pty_affiliation IN ('DEM','REP') AND ind.cycle IN ($in) GROUP BY cmte.cmte_pty_affiliation ORDER BY cmte.cmte_pty_affiliation",undef,$latsw,$latne,$longsw,$longne,@cycles);
+        };
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @rows;
+    }
+}
+
+#
+# Count if we have enough Opinion data for aggregate
+#
+sub CountOpinions {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @count;
+
+    eval { 
+      @count = ExecSQL($dbuser, $dbpasswd, "SELECT count(color) FROM rwb_opinions op WHERE latitude>? AND latitude<? AND longitude>? AND longitude<?",undef,$latsw,$latne,$longsw,$longne);
+    };
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @count;
+    }
+}
+
+#
+# Get aggregate Opinion data
+#
+sub SummarizeOpinions {
+  my ($latne,$longne,$latsw,$longsw,$cycle,$format) = @_;
+  my @rows;
+  
+    eval { 
+      @rows = ExecSQL($dbuser, $dbpasswd,  "SELECT AVG(color) AS avg, STDDEV(color) AS stdev FROM rwb_opinions op WHERE latitude>? AND latitude<? AND longitude>? AND longitude<?",undef,$latsw,$latne,$longsw,$longne);
+        };
+  
+    if ($@) { 
+        return (undef,$@);
+    } else {
+        return @rows;
     }
 }
 

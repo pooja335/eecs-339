@@ -19,8 +19,8 @@ drop table rwb_cs_ind_to_geo;
 drop table rwb_opinions;
 drop table rwb_permissions;
 drop table rwb_actions;
-drop table rwb_users;
 drop table rwb_invite_codes;
+drop table rwb_users;
 
 
 
