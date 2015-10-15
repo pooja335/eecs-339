@@ -14,12 +14,12 @@
 
 body { background: #f0f0f0; 
        color: black; 
-       font-family: Times, serif
+       font-family: Times, serif;
        margin-top: 2%; 
        margin-bottom: 2%; 
        margin-left: 2%; 
        margin-right: 2%;
-       font-size: normal
+       font-size: normal;
       }
 
 p { margin-top: 15px; 

@@ -132,6 +132,24 @@ NewData = function(data) {
 	UpdateMap();
 },
 
+// This function throttles the function passed in to it
+// The returned, throttled function is bound to maps in Start
+// For this application, we are throttling ViewShift 
+// This code was modified from http://sampsonblog.com/749/simple-throttle-function
+Throttler = function(called_func, delay) {
+	var waiting = false;
+	return function() {
+		if (!waiting) {
+			called_func();
+			// set waiting back to true, because we just ran called_func (ViewShift)
+			waiting = true;
+			setTimeout(function() {
+				waiting = false;
+			}, delay);
+		}
+	}
+},
+
 //
 // The Google Map calls us back at ViewShift when some aspect
 // of the map changes (for example its bounds, zoom, etc)
@@ -207,7 +225,7 @@ ViewShift = function(e,is_aggregate) {
 		whatcycles.push($(this).attr('value'));
 	});
   	whatcycles = whatcycles.toString();
-  	console.log(is_aggregate);
+  	// console.log(is_aggregate);
 //checks to see if aggregate function should get called, or near
 	if (is_aggregate) {
 		$.get("rwb.pl",
@@ -313,18 +331,27 @@ Start = function(location) {
 	$("#color").css("background-color", "white")
 		.html("<b><blink>Waiting for first position</blink></b>");
 
+
+// This assigns the output of Throttler to a function
+// This new throttled ViewShift function will get bound to map changes
+	var ThrottledViewShift = Throttler(ViewShift, 1000);
+
 //
 // These lines register callbacks.   If the user scrolls the map, 
 // zooms the map, etc, then our function "ViewShift" (defined above
 // will be called after the map is redrawn
 //
-	google.maps.event.addListener(map,"bounds_changed",ViewShift);
-	google.maps.event.addListener(map,"center_changed",ViewShift);
-	google.maps.event.addListener(map,"zoom_changed",ViewShift);
+	google.maps.event.addListener(map,"bounds_changed",ThrottledViewShift);
+	google.maps.event.addListener(map,"center_changed",ThrottledViewShift);
+	google.maps.event.addListener(map,"zoom_changed",ThrottledViewShift);
 
+// Don't bind this to ThrottledViewShift, because when somebody checks a 
+	// checkbox, it should update immediately, not wait one second
 // when checkbox gets selected, update map
  	$("input[type='checkbox']").click(ViewShift);
 
+// Since this is a separate button and function, we don't need to throttle it,
+	// because it is only getting called when the user clicks the button
 // when aggregate gets clicked, calculate aggregate
 	$("button#aggregate").click(function(e) { ViewShift(e,true); });
 

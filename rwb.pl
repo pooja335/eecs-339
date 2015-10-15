@@ -34,7 +34,7 @@
 #
 # database input and output is paired into the two arrays noted
 #
-my $debug=1; # default - will be overriden by a form parameter or cookie
+my $debug=0; # default - will be overriden by a form parameter or cookie
 my @sqlinput=();
 my @sqloutput=();
 
@@ -268,7 +268,7 @@ print "<body style=\"height:100\%;margin:0\">";
 #
 # Force device width, for mobile phones, etc
 #
-#print "<meta name=\"viewport\" content=\"width=device-width\" />\n";
+print "<meta name=\"viewport\" content=\"width=device-width\" />\n";
 
 # This tells the web browser to render the page in the style
 # defined in the css file
@@ -324,7 +324,7 @@ if ($action eq "base") {
   # Google maps API, needed to draw the map
   #
   print "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js\" type=\"text/javascript\"></script>";
-  print "<script src=\"http://maps.google.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>";
+  print "<script src=\"https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false\" type=\"text/javascript\"></script>";
   
   #
   # The Javascript portion of our app
@@ -344,6 +344,7 @@ if ($action eq "base") {
   # And a map which will be populated later
   #
   print "<div id=\"map\" style=\"width:100\%; height:80\%\"></div>";
+  # print "<div id=\"map\" style=\"width:200px; height:200px\"></div>";
   
   # 
   # creates checkboxes for opinions and individuals
