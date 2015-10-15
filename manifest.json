@@ -1,0 +1,14 @@
+{
+  "name": "RWB",
+  "icons": [
+    {
+      "src": "icon.jpg",
+      "sizes": "96x96",
+      "type": "image/jpeg",
+      "density": 1
+    }
+  ],
+  "start_url": "rwb-mobile.pl",
+  "display": "standalone",
+  "orientation": "portrait"
+}

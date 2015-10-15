@@ -14,12 +14,12 @@
 
 body { background: #f0f0f0; 
        color: black; 
-       font-family: Times, serif
+       font-family: Times, serif;
        margin-top: 2%; 
        margin-bottom: 2%; 
        margin-left: 2%; 
        margin-right: 2%;
-       font-size: normal
+       font-size: normal;
       }
 
 p { margin-top: 15px; 
@@ -94,6 +94,31 @@ div.infotitle {
       	text-transform:uppercase; 
 	letter-spacing: .2em; 
 	}
+
+#summary div {
+  text-align: center;
+  font-size: 120%;
+  padding-top: 3%;
+}
+
+div#query-data, div#choose-cycles, div#opinion-data, div#calculate-summary, div#user-mods {
+  text-align: center;
+  font-size: 120%;
+  margin-top: 5%;
+  margin-bottom: 5%;
+}
+
+div#opinion-data input[type=submit] {
+  margin-top: 4%;
+  padding: 2%;
+  border-radius: 15%;
+}
+
+div#calculate-summary button {
+  margin-top: 2%;
+  padding: 2%;
+  border-radius: 15%;
+}
 
 a:link, a:active {
         margin: 0 1px;

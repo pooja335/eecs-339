@@ -2,7 +2,7 @@
 
 #
 #
-# rwb.pl (Red, White, and Blue)
+# rwb-mobile.pl (Red, White, and Blue)
 #
 #
 # Example code for EECS 339, Northwestern University
@@ -258,8 +258,10 @@ print header(-expires=>'now', -cookie=>\@outputcookies);
 #
 #
 #print start_html('Red, White, and Blue');
+print "<!DOCTYPE html>";
 print "<html style=\"height: 100\%\">";
 print "<head>";
+print "<link rel=\"manifest\" href=\"manifest.json\">";
 print "<title>Red, White, and Blue</title>";
 print "</head>";
 
@@ -273,11 +275,7 @@ print "<meta name=\"viewport\" content=\"width=device-width\" />\n";
 # This tells the web browser to render the page in the style
 # defined in the css file
 #
-print "<style type=\"text/css\">\n\@import \"rwb.css\";\n</style>\n";
-  
-
-print "<center>" if !$debug;
-
+print "<style type=\"text/css\">\n\@import \"rwb-mobile.css\";\n</style>\n";
 
 #
 #
@@ -320,18 +318,17 @@ if ($action eq "login") {
 #
 #
 if ($action eq "base") { 
-  #
-  # Google maps API, needed to draw the map
-  #
+
+
   print "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js\" type=\"text/javascript\"></script>";
-  print "<script src=\"http://maps.googleapis.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>";
-  
   #
   # The Javascript portion of our app
   #
-  print "<script type=\"text/javascript\" src=\"rwb.js\"> </script>";
-
-
+  print "<script type=\"text/javascript\" src=\"rwb-mobile.js\"></script>";
+  #
+  # Google maps API, needed to draw the map
+  #
+  print "<script async defer src=\"http://maps.googleapis.com/maps/api/js?key=AIzaSyA7s3rLmlAgAC5WwqQw6Co1njG95fiDTHo&callback=initMap\"></script>";
 
   #
   #
@@ -347,25 +344,29 @@ if ($action eq "base") {
   
   # 
   # creates checkboxes for opinions and individuals
+  print "<div id=\"query-data\">";
+  print "<p><strong>Choose data to query</strong></p>";
   print "<input type=\"checkbox\" name=\"committees\"> <label>View committee data?</label> <br>"; 
   print "<input type=\"checkbox\" name=\"candidates\"> <label>View candidate data?</label> <br>";  
   print "<input type=\"checkbox\" name=\"individuals\"> <label>View individual data?</label> <br>";
   print "<input type=\"checkbox\" name=\"opinions\"> <label>View opinion data?</label> <br>";
+  print "</div><hr>";
 
   #make cycle checkboxes
-  print "<h4>Choose election cycles:</h4>";
+  print "<div id=\"choose-cycles\"><p><strong>Choose election cycles:</strong></p>";
   my @cycles;
-   @cycles = ExecSQL($dbuser,
-		     $dbpasswd,
-		     "select distinct cycle from cs339.committee_master order by cycle desc", "COL");
-   foreach my $cyc (@cycles) {
-	print "<input type=\"checkbox\" name=\"cycle\" value=\"$cyc\"> <label>$cyc</label> <br>";
-   }
+  @cycles = ExecSQL($dbuser, $dbpasswd, "select distinct cycle from cs339.committee_master order by cycle desc", "COL");
+  foreach my $cyc (@cycles) {
+	  print "<input type=\"checkbox\" name=\"cycle\" value=\"$cyc\"> <label>$cyc</label> <br>";
+  }
+  print "</div><hr>";
 
 
   #creates form for submitting opinion data
   #only creates this form if user is not anonymous
   if ($user ne "anon") { 
+    print "<div id=\"opinion-data\">";
+    print "<p><strong>Give opinion data</strong></p>";
     print start_form(-name=>'GiveOpinionData'),
     p('What do you think the political "color" is at your current location?'),
     p('Select -1 for red, 0 for neutral, and +1 for blue.'),
@@ -378,10 +379,14 @@ if ($action eq "base") {
     hidden(-name=>'long'),
     submit,
     end_form;
+    print "</div><hr>";
   } 
 
   # button to calculate aggregate data - not in near because too slow
+  print "<div id=\"calculate-summary\">";
+  print "<p><strong>Calculate a summary of the data and cycles you selected above</strong></p>";
   print "<button id=\"aggregate\">Calculate summary</button>";
+  print "</div><hr>";
 
   # summary div where summary goes
   print "<div id=\"summary\" style=\:width:100\%;></div>";  
@@ -394,29 +399,31 @@ if ($action eq "base") {
   # User mods
   #
   #
+  print "<div id=\"user-mods\">";
   if ($user eq "anon") {
-    print "<p>You are anonymous, but you can also <a href=\"rwb.pl?act=login\">login</a></p>";
+    print "<p><strong>You are anonymous, but you can also <a href=\"rwb-mobile.pl?act=login\">login</a></strong></p>";
   } else {
-    print "<p>You are logged in as $user and can do the following:</p>";
+    print "<p><strong>You are logged in as $user and can do the following:</strong></p>";
     if (UserCan($user,"give-opinion-data")) {
-      print "<p><a href=\"rwb.pl?act=give-opinion-data\">Give Opinion Of Current Location</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=give-opinion-data\">Give Opinion Of Current Location</a></p>";
     }
     if (UserCan($user,"give-cs-ind-data")) {
-      print "<p><a href=\"rwb.pl?act=give-cs-ind-data\">Geolocate Individual Contributors</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=give-cs-ind-data\">Geolocate Individual Contributors</a></p>";
     }
     if (UserCan($user,"manage-users") || UserCan($user,"invite-users")) {
-      print "<p><a href=\"rwb.pl?act=invite-user\">Invite User</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=invite-user\">Invite User</a></p>";
     }
     if (UserCan($user,"manage-users") || UserCan($user,"add-users")) { 
-      print "<p><a href=\"rwb.pl?act=add-user\">Add User</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=add-user\">Add User</a></p>";
     } 
     if (UserCan($user,"manage-users")) { 
-      print "<p><a href=\"rwb.pl?act=delete-user\">Delete User</a></p>";
-      print "<p><a href=\"rwb.pl?act=add-perm-user\">Add User Permission</a></p>";
-      print "<p><a href=\"rwb.pl?act=revoke-perm-user\">Revoke User Permission</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=delete-user\">Delete User</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=add-perm-user\">Add User Permission</a></p>";
+      print "<p><a href=\"rwb-mobile.pl?act=revoke-perm-user\">Revoke User Permission</a></p>";
     }
-    print "<p><a href=\"rwb.pl?act=logout&run=1\">Logout</a></p>";
+    print "<p><a href=\"rwb-mobile.pl?act=logout&run=1\">Logout</a></p>";
   }
+  print "</div>";
 
   #
   # And a div to populate with info about nearby stuff
@@ -577,7 +584,7 @@ if ($action eq "aggregate") {
     else {
       print "<div style=\"background-color: dodgerblue;\">";
     }
-    print "<hr><h3>Committee Summary</h3><h4>Total money given by committees:</h4>";
+    print "<h2>Committee Summary</h2><h3>Total money given by committees:</h3>";
     print $rows[0][1] > 0 ? "<p> To Democrats: \$$rows[0][1]</p>" : "<p> To Democrats: $0</p>";
     print $rows[1][1] > 0 ? "<p> To Republicans: \$$rows[1][1]</p>" : "<p> To Republicans: $0</p>";
     if ($difference < 0) {
@@ -611,7 +618,7 @@ if ($action eq "aggregate") {
       @count = CountIndividuals($latne,$longne,$latsw,$longsw,$cycle,$format);
       $count = $count[0][0];
 
-      # THIS LINE IS ONLY FOR DEBUGGING 
+      # THIS LINE IS ONLY FOR DEBUGGING
       # print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
     }
 
@@ -626,7 +633,7 @@ if ($action eq "aggregate") {
     else {
       print "<div style=\"background-color: dodgerblue;\">";
     }
-    print "<hr><h3>Individual Summary</h3><h4>Total money given by individuals:</h4>";
+    print "<h2>Individual Summary</h2><h3>Total money given by individuals:</h3>";
     print $rows[0][1] > 0 ? "<p> To Democrats: \$$rows[0][1]</p>" : "<p> To Democrats: $0</p>";
     print $rows[1][1] > 0 ? "<p> To Republicans: \$$rows[1][1]</p>" : "<p> To Republicans: $0</p>";
     if ($difference < 0) {
@@ -662,7 +669,7 @@ if ($action eq "aggregate") {
       $count = $count[0][0];
       $num_expansions += 1;
 
-      # THIS LINE IS ONLY FOR DEBUGGING
+      # THIS LINE IS ONLY FOR DEBUGGING 
       # print "<h1> count: $count, height of box: $latdist, width of box: $longdist</h1>";
     }
 
@@ -682,7 +689,7 @@ if ($action eq "aggregate") {
     else {
       print "<div style=\"background-color: #d8d8d8;\">";
     }
-    print "<h3>Opinion Summary</h3><p>Number of opinions: $count</p>";
+    print "<h2>Opinion Summary</h2><p>Number of opinions: $count</p>";
     print "<p>Average opinion data (+1 = blue, -1 = red): $average</p>";
     print "<p>Standard deviation of opinion data: $stnddev</p><hr></div>";
   }
@@ -722,13 +729,13 @@ if ($action eq "invite-user") {
   print "Can't invite user because: $error";
       } else {
   open(MAIL,"| mail -s 'Invitation to RWB!' $email") or die "Can't run mail\n";
-  print MAIL "Click here for your one-time invitation to RWB: http://murphy.wot.eecs.northwestern.edu/~pps860/rwb/rwb.pl?act=accept-invite&code=$code\n";
+  print MAIL "Click here for your one-time invitation to RWB: http://murphy.wot.eecs.northwestern.edu/~pps860/rwb/rwb-mobile.pl?act=accept-invite&code=$code\n";
   close(MAIL);
   print "Sent invitation to $email from $user\n";
       }
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 #
@@ -785,7 +792,7 @@ if ($action eq "accept-invite") {
   } else {
     print h2('Invalid URL')
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 #
@@ -812,7 +819,7 @@ if ($action eq "give-opinion-data") {
       print "Added opinion to opinion data.\n";
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 
@@ -859,7 +866,7 @@ if ($action eq "add-user") {
       }
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 #
@@ -898,7 +905,7 @@ if ($action eq "delete-user") {
       }
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 
@@ -944,7 +951,7 @@ if ($action eq "add-perm-user") {
       }
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 
@@ -990,7 +997,7 @@ if ($action eq "revoke-perm-user") {
       }
     }
   }
-  print "<p><a href=\"rwb.pl?act=base&run=1\">Return</a></p>";
+  print "<p><a href=\"rwb-mobile.pl?act=base&run=1\">Return</a></p>";
 }
 
 

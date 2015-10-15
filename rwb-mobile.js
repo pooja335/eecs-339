@@ -25,9 +25,13 @@
 // of this file)
 // 
 //
-$(document).ready(function() {
-	navigator.geolocation.getCurrentPosition(Start);
-});
+
+// This is hardcoded because navigator.geolocation has tighter security
+	// restrictions on mobile than on laptop
+var initMap = function() {
+	// navigator.geolocation.getCurrentPosition(Start);
+	Start(42.06, -87.68, 20);
+};
 
 // Global variables
 var map, usermark, markers = [],
@@ -227,7 +231,7 @@ ViewShift = function(e,is_aggregate) {
   	// console.log(is_aggregate);
 //checks to see if aggregate function should get called, or near
 	if (is_aggregate) {
-		$.get("rwb.pl",
+		$.get("rwb-mobile.pl",
 		{
 			act:	"aggregate",
 			latne:	ne.lat(),
@@ -242,7 +246,7 @@ ViewShift = function(e,is_aggregate) {
 		});
 	} 
 	else {
-		$.get("rwb.pl",
+		$.get("rwb-mobile.pl",
 		{
 			act:	"near",
 			latne:	ne.lat(),
@@ -284,14 +288,10 @@ Reposition = function(pos) {
 // The start function is called back once the document has 
 // been loaded and the browser has determined the current location
 //
-Start = function(location) {
-// Parse the current location into latitude and longitude        
-	var lat = location.coords.latitude,
-	    long = location.coords.longitude,
-	    acc = location.coords.accuracy,
+Start = function(lat, long, acc) {
 // Get a pointer to the "map" division of the document
 // We will put a google map into that division
-	    mapc = $("#map");
+	var mapc = $("#map");
 
 // Create a new google map centered at the current location
 // and place it into the map division of the document
