@@ -19,7 +19,32 @@ print "<title>Portfolio Manager</title>";
 print "</head>";
 print "<body>";
 
-print "hello, world!";
+my $action;
+my $run;
+
+#set action and run
+if (defined(param("act"))) {
+	$action=param("act");
+	
+	if (defined(param("run"))){ 
+		$run = param("run") == 1;
+	} else {
+    	$run = 0;
+  	}
+} else { # set default action
+	$action="home";
+  	$run = 1;
+}
+
+if ($action eq "login") {
+	print "welcome to login!";
+}
+
+if ($action eq "home") {
+	
+	print "Welcome to home!";
+	
+}
 
 
 print "</body>";
