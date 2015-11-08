@@ -1,15 +1,11 @@
 #!/usr/bin/perl -w
-
-
-my $debug=0; # default - will be overriden by a form parameter or cookie
-my @sqlinput=();
-my @sqloutput=();
-
 use strict;
 
 use DBI;
 my $dbuser="pps860";
 my $dbpasswd="zaM7in9Wf";
+my @sqlinput=();
+my @sqloutput=();
 
 #use Time::ParseDate;
 use CGI qw(:standard);
@@ -52,22 +48,22 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "portfolio";
+	$action = "login";
 	undef $outputsessioncookie;
 }
 
 if ($action eq "login") {
 	if ($run) {#if login attempt
 		($useremail, $password) = (param('useremail'), param('password'));
-#		if ( ValidUser($useremail, $password )) {
+		if ( ValidUser($useremail, $password )) {
 			$outputsessioncookie = join("/",$useremail,$password);
 			$action = "home";
 			$run = 1;
-#  		} else { #try again with empty form
-# 			$badlogin = 1;
-# 			$action = "login";
-# 			$run = 0;
-# 		}
+ 		} else { #try again with empty form
+			$badlogin = 1;
+			$action = "login";
+			$run = 0;
+		}
 	} else { #just show the form
 		undef $inputsessioncookie;
 		undef $useremail;
@@ -75,6 +71,14 @@ if ($action eq "login") {
 	}
 }
 
+
+if ($action eq "logout") {
+  	$deletecookie=1;
+  	$action = "login";
+  	undef $useremail;
+  	undef $password;
+  	$run = 0;
+}
 
 #send cookies to client
 my @outputcookies;
@@ -95,7 +99,7 @@ print header(-expires=>'now', -cookie=>\@outputcookies);
 
 #start the page
 #print "Content-type:text/html\r\n\r\n";
-print "<!DOCTYPE html>";
+#print "<!DOCTYPE html>";
 print "<html>";
 print "<head>";
 print "<title>PJH Portfolio Manager</title>";
@@ -115,15 +119,43 @@ if ($action eq "login") {
 	  			"Password:",password_field(-name=>'password'),p,
 	    		hidden(-name=>'act',default=>['login']),
 	      		hidden(-name=>'run',default=>['1']),
-				submit,
+				submit(name=>"Log In"),
 		  		end_form;
   	}
   	if ($badlogin) { 
-    	print "Login failed.  Try again.<p>"
+    	print "<p>Login failed.  Try again.</p><br>";
   	} 
+   	print "<p>No account? <button id=\"register\">Register</button></p>";
+}
+
+if ($action eq "register") {
+	if(!$run) {
+		print h2('Register New Account');
+		print start_form(-name=>'Register'),
+					"Name:", textfield(-name=>'name'), p,
+					"Email:", textfield(-name=>'useremail'), p,
+	  				"Password:", password_field(-name=>'password'), p,
+	    			hidden(-name=>'act',default=>['register']),
+	      			hidden(-name=>'run',default=>['1']),
+					submit(name=>"Create Account"),
+		  			end_form;
+	} else {
+		my $name = param('name');
+		my $email = param('email');
+		my password = param('password');
+		my $error = UserAdd($name, $password, $email)
+		if ($error) {
+			print "Error: $error";
+		} else {
+			print "Congrats! new account created.";
+			$action = "login";
+			$run = 0;
+		}
+	}
 }
 
 if ($action eq "home") {
+	
 	print "Welcome to home!";
 }
 
@@ -159,6 +191,7 @@ if ($action eq "portfolio") {
 print "</body>";
 print "</html>";
 
+
 ########################################### HELPER FUNCTIONS ###########################################
 
 sub ValidUser {
@@ -166,7 +199,7 @@ sub ValidUser {
   	my @col;
   	
   	eval {@col=ExecSQL($dbuser, $dbpasswd, 
-  						"select count(*) from users where email=? and password=?", "COL",
+  						"SELECT count(*) FROM users WHERE email=? AND password=?", "COL",
   						$useremail, $password);
   	};
   	
@@ -175,10 +208,15 @@ sub ValidUser {
   	} else {
     	return $col[0]>0;
   	}
-}# Check to see if user and password combination exist ###NEEDS QUERY
+}# Checks validity of login ###CHECK QUERY
 
+sub UserAdd { 
+  eval { ExecSQL($dbuser,$dbpasswd,
+		 "QUERY",undef,@_);};
+  return $@;
+} # Adds new user (helps 'register' act) ###NEEDS QUERY
 
-
+########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
 # @list=ExecSQL($user, $password, $querystring, $type, @fill);
 #
@@ -190,70 +228,70 @@ sub ValidUser {
 # ExecSQL executes "die" on failure.
 #
 sub ExecSQL {
-  my ($user, $passwd, $querystring, $type, @fill) =@_;
-  if ($debug) { 
-    # if we are recording inputs, just push the query string and fill list onto the 
-    # global sqlinput list
-    push @sqlinput, "$querystring (".join(",",map {"'$_'"} @fill).")";
-  }
-  my $dbh = DBI->connect("DBI:Oracle:",$user,$passwd);
-  if (not $dbh) { 
-    # if the connect failed, record the reason to the sqloutput list (if set)
-    # and then die.
-    if ($debug) { 
-      push @sqloutput, "<b>ERROR: Can't connect to the database because of ".$DBI::errstr."</b>";
-    }
-    die "Can't connect to database because of ".$DBI::errstr;
-  }
-  my $sth = $dbh->prepare($querystring);
-  if (not $sth) { 
-    #
-    # If prepare failed, then record reason to sqloutput and then die
-    #
-    if ($debug) { 
-      push @sqloutput, "<b>ERROR: Can't prepare '$querystring' because of ".$DBI::errstr."</b>";
-    }
-    my $errstr="Can't prepare $querystring because of ".$DBI::errstr;
-    $dbh->disconnect();
-    die $errstr;
-  }
-  if (not $sth->execute(@fill)) { 
-    #
-    # if exec failed, record to sqlout and die.
-    if ($debug) { 
-      push @sqloutput, "<b>ERROR: Can't execute '$querystring' with fill (".join(",",map {"'$_'"} @fill).") because of ".$DBI::errstr."</b>";
-    }
-    my $errstr="Can't execute $querystring with fill (".join(",",map {"'$_'"} @fill).") because of ".$DBI::errstr;
-    $dbh->disconnect();
-    die $errstr;
-  }
-  #
-  # The rest assumes that the data will be forthcoming.
-  #
-  #
-  my @data;
-  if (defined $type and $type eq "ROW") { 
-    @data=$sth->fetchrow_array();
-    $sth->finish();
-    if ($debug) {push @sqloutput, MakeTable("debug_sqloutput","ROW",undef,@data);}
-    $dbh->disconnect();
-    return @data;
-  }
-  my @ret;
-  while (@data=$sth->fetchrow_array()) {
-    push @ret, [@data];
-  }
-  if (defined $type and $type eq "COL") { 
-    @data = map {$_->[0]} @ret;
-    $sth->finish();
-    if ($debug) {push @sqloutput, MakeTable("debug_sqloutput","COL",undef,@data);}
-    $dbh->disconnect();
-    return @data;
-  }
-  $sth->finish();
-  if ($debug) {push @sqloutput, MakeTable("debug_sql_output","2D",undef,@ret);}
-  $dbh->disconnect();
-  return @ret;
+  	my ($user, $passwd, $querystring, $type, @fill) =@_;
+  	if ($debug) { 
+    	# if we are recording inputs, just push the query string and fill list onto the 
+    	# global sqlinput list
+    	push @sqlinput, "$querystring (".join(",",map {"'$_'"} @fill).")";
+  	}
+  	my $dbh = DBI->connect("DBI:Oracle:",$user,$passwd);
+  	if (not $dbh) { 
+    	# if the connect failed, record the reason to the sqloutput list (if set)
+    	# and then die.
+    	if ($debug) { 
+      		push @sqloutput, "<b>ERROR: Can't connect to the database because of ".$DBI::errstr."</b>";
+    	}
+    	die "Can't connect to database because of ".$DBI::errstr;
+  	}
+  	my $sth = $dbh->prepare($querystring);
+  	if (not $sth) { 
+    	#
+    	# If prepare failed, then record reason to sqloutput and then die
+    	#
+    	if ($debug) { 
+      		push @sqloutput, "<b>ERROR: Can't prepare '$querystring' because of ".$DBI::errstr."</b>";
+    	}
+    	my $errstr="Can't prepare $querystring because of ".$DBI::errstr;
+    	$dbh->disconnect();
+    	die $errstr;
+  	}
+  	if (not $sth->execute(@fill)) { 
+    	#
+    	# if exec failed, record to sqlout and die.
+    	if ($debug) { 
+      		push @sqloutput, "<b>ERROR: Can't execute '$querystring' with fill (".join(",",map {"'$_'"} @fill).") because of ".$DBI::errstr."</b>";
+    	}
+    	my $errstr="Can't execute $querystring with fill (".join(",",map {"'$_'"} @fill).") because of ".$DBI::errstr;
+    	$dbh->disconnect();
+    	die $errstr;
+  	}
+  	#
+  	# The rest assumes that the data will be forthcoming.
+  	#
+  	#
+  	my @data;
+  	if (defined $type and $type eq "ROW") { 
+    	@data=$sth->fetchrow_array();
+    	$sth->finish();
+    	if ($debug) {push @sqloutput, MakeTable("debug_sqloutput","ROW",undef,@data);}
+    	$dbh->disconnect();
+    	return @data;
+  	}
+  	my @ret;
+  	while (@data=$sth->fetchrow_array()) {
+    	push @ret, [@data];
+  	}
+  	if (defined $type and $type eq "COL") { 
+    	@data = map {$_->[0]} @ret;
+    	$sth->finish();
+    	if ($debug) {push @sqloutput, MakeTable("debug_sqloutput","COL",undef,@data);}
+    	$dbh->disconnect();
+    	return @data;
+  	}
+  	$sth->finish();
+  	if ($debug) {push @sqloutput, MakeTable("debug_sql_output","2D",undef,@ret);}
+  		$dbh->disconnect();
+  		return @ret;
 }
 
 
@@ -265,7 +303,7 @@ sub ExecSQL {
 
 # The following is necessary so that DBD::Oracle can
 # find its butt
-#
+
 BEGIN {
   unless ($ENV{BEGIN_BLOCK}) {
     use Cwd;
@@ -277,5 +315,3 @@ BEGIN {
     exec 'env',cwd().'/'.$0,@ARGV;
   }
 }
-
-
