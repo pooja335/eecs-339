@@ -35,6 +35,7 @@ if (defined(param("act"))) {
     	$run = 0;
   	}
 } else { # set default action
+	# hmmm... we don't have an anon user, might need to handle default differently than RWB
 	$action="home";
   	$run = 1;
 }
@@ -85,7 +86,7 @@ print header(-expires=>'now', -cookie=>\@outputcookies);
 #print "<!DOCTYPE html>";
 print "<html>";
 print "<head>";
-print "<title>Portfolio Manager</title>";
+print "<title>PJH Portfolio Manager</title>";
 print "</head>";
 print "<body>";
 
