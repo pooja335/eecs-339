@@ -36,8 +36,8 @@ if (defined(param("act"))) {
   	}
 } else { # set default action
 	# hmmm... we don't have an anon user, might need to handle default differently than RWB
-	$action="home";
-  	$run = 1;
+	$action="login";
+  	$run = 0;
 }
 
 # handle session cookie
@@ -52,15 +52,15 @@ if (defined($inputsessioncookie)) {
 if ($action eq "login") {
 	if ($run) {#if login attempt
 		($useremail, $password) = (param('useremail'), param('password'));
-		if ( ValidUser($useremail, $password )) {
+#		if ( ValidUser($useremail, $password )) {
 			$outputsessioncookie = join("/",$useremail,$password);
 			$action = "home";
 			$run = 1;
-		} else { #try again with empty form
-			$badlogin = 1;
-			$action = "login";
-			$run = 0;
-		}
+#  		} else { #try again with empty form
+# 			$badlogin = 1;
+# 			$action = "login";
+# 			$run = 0;
+# 		}
 	} else { #just show the form
 		undef $inputsessioncookie;
 		undef $useremail;
@@ -71,6 +71,11 @@ if ($action eq "login") {
 
 #send cookies to client
 my @outputcookies;
+
+my $badcookie = cookie(-name => "badcookie",
+						-value => "badcookie",
+						-expires=>($deletecookie ? '-1h' : '+1h'));
+	push @outputcookies, $badcookie;
 
 if (defined($outputsessioncookie)) {
 	my $cookie = cookie(-name => $sessioncookie,
