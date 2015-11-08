@@ -145,7 +145,7 @@ if ($action eq "register") {
 		my $name = param('name');
 		my $email = param('email');
 		my password = param('password');
-		my $error = UserAdd($name, $password, $email)
+		my $error = UserAdd($name, $password, $email);
 		if ($error) {
 			print "Error: $error";
 		} else {
@@ -289,10 +289,20 @@ sub ChangePfName {
   my ($newname, $useremail, $oldname)=@_;
   eval {ExecSQL($dbuser,$dbpasswd, "update portfolios set name=? where user_email=? and name=?",undef,$newname, $useremail, $oldname);};
   return $@;
-}
+} # Updates portfolio name
 
 sub ChangeShares {
   eval {ExecSQL($dbuser,$dbpasswd, "update holdings set num_shares=? where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
+  return $@;
+} # Updates the number of shares in a holding
+
+sub ChangeCash {
+  eval {ExecSQL($dbuser,$dbpasswd, "update portfolios set cash_account=? where user_email=? and name=?",undef,@_);};
+  return $@;
+} # Updates the cash account of a portfolio
+
+sub DelHolding {
+   eval {ExecSQL($dbuser,$dbpasswd, "delete from holdings where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
   return $@;
 }
 
