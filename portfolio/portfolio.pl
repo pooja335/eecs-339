@@ -265,6 +265,28 @@ sub UserPf {
   }
 } # Selects all portfolios of a user
 
+sub PfHoldings {
+  my @rows;
+  eval { @rows = ExecSQL($dbuser, $dbpasswd, 
+              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", "ROWS", 
+              @_); };
+  if ($@) { 
+    return (undef,$@);
+  } else {
+    return (MakeTable("holdings_table",
+          "2D",
+         ["Symbol", "Number of Shares"],
+         @rows),$@);
+  }
+} # Selects all holdings associated with a portfolio
+
+sub PfShares {
+  eval {ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? user_email=? and portfolio_name=?",undef,@_);};
+  return $@;
+} # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
+
+
+
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
