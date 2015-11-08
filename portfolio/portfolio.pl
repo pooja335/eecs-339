@@ -285,8 +285,16 @@ sub PfShares {
   return $@;
 } # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
 
+sub ChangePfName {
+  my ($newname, $useremail, $oldname)=@_;
+  eval {ExecSQL($dbuser,$dbpasswd, "update portfolios set name=? where user_email=? and name=?",undef,$newname, $useremail, $oldname);};
+  return $@;
+}
 
-
+sub ChangeShares {
+  eval {ExecSQL($dbuser,$dbpasswd, "update holdings set num_shares=? where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
+  return $@;
+}
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
