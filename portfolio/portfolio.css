@@ -1,0 +1,11 @@
+.pf-header-edit {
+	display: none;
+}
+
+table th, table td {
+	border: 1px solid black;
+}
+
+table th {
+	font-weight: bold;
+}

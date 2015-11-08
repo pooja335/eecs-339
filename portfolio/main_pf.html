@@ -1,0 +1,38 @@
+<link rel="stylesheet" href="portfolio.css">
+
+<!-- portfolio header when not editing -->
+<div class="pf-header">
+	<h1>Portfolio: <TMPL_VAR NAME=PF_NAME></h1>
+	<a id="edit-pfname" href="#">(edit portfolio name)</a>
+</div>
+
+<!-- portfolio header to be edited -->
+<div class="pf-header-edit">
+	<form>
+		<h1>Portfolio:
+			<input name="pf_name" value="<TMPL_VAR NAME=PF_NAME>">
+		</h1>
+		<button type="submit">Save</button>
+	</form>
+</div>
+
+<div class="pf-info">
+	<h2>Estimated value: $<TMPL_VAR NAME=VALUE></h2>
+	<h2>Volatility: <TMPL_VAR NAME=VOLATILITY></h2>
+	<h2>Correlation: <TMPL_VAR NAME=CORRELATION></h2>
+</div>
+
+<div class="pf-holdings">
+	<table>
+		<tr>
+			<th>Company symbol</th>
+			<th>Number of shares</th>
+			<th></th>
+			<th></th>
+		</tr>
+		<TMPL_VAR NAME=TABLE_DATA>	
+	</table>
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type="text/javascript" src="portfolio.js"></script>

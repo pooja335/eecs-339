@@ -2,30 +2,8 @@
 
 #
 #
-# pf.pl (Red, White, and Blue)
+# pf.pl 
 #
-#
-# Example code for EECS 339, Northwestern University
-# 
-# Peter Dinda
-#
-
-# The overall theory of operation of this script is as follows
-#
-# 1. The inputs are form parameters, if any, and a session cookie, if any. 
-# 2. The session cookie contains the login credentials (User/Password).
-# 3. The parameters depend on the form, but all forms have the following three
-#    special parameters:
-#
-#         act      =  form  <the form in question> (form=base if it doesn't exist)
-#         run      =  0 Or 1 <whether to run the form or not> (=0 if it doesn't exist)
-#         debug    =  0 Or 1 <whether to provide debugging output or not> 
-#
-# 4. The script then generates relevant html based on act, run, and other 
-#    parameters that are form-dependent
-# 5. The script also sends back a new session cookie (allowing for logout functionality)
-# 6. The script also sends back a debug cookie (allowing debug behavior to propagate
-#    to child fetches)
 #
 
 
@@ -71,6 +49,8 @@ use DBI;
 # date strings into the unix epoch time (seconds since 1970)
 #
 use Time::ParseDate;
+
+use HTML::Template;
 
 
 
@@ -130,7 +110,7 @@ if (defined(param("act"))) {
     $run = 0;
   }
 } else {
-  $action="login";
+  $action="portfolio";
   $run = 1;
 }
 
@@ -203,7 +183,6 @@ if ($action eq "login") {
     # we were given
     #
     undef $inputcookiecontent;
-    ($user,$email,$password)=("anon","anon@anon","anonanon");
   }
 } 
 
@@ -273,7 +252,7 @@ print "<meta name=\"viewport\" content=\"width=device-width\" />\n";
 # This tells the web browser to render the page in the style
 # defined in the css file
 #
-print "<style type=\"text/css\">\n\@import \"rwb.css\";\n</style>\n";
+print "<style type=\"text/css\">\n\@import \"pf.css\";\n</style>\n";
   
 
 print "<center>" if !$debug;
@@ -311,42 +290,6 @@ if ($action eq "login") {
   }
 }
 
-# SIGN UP
-#
-# can be called from login page
-#
-#
-if ($action ep "signup") {
-    if (!$run) { 
-      print start_form(-name=>'Create Account'),
-  h2('Create Account'),
-    "Name: ", textfield(-name=>'name'),
-      p,
-        "Email: ", textfield(-name=>'email',-default=>$email,-disabled=>'true'),
-    p,
-      "Password: ", textfield(-name=>'password'),
-        p,
-          hidden(-name=>'run',-default=>['1']),
-      hidden(-name=>'act',-default=>['signup']),
-        submit,
-          end_form,
-            hr;
-    } else {
-        my $name=param('name');
-        my $email=param('email');
-        my $password=param('password');
-        my $error;
-        $error=UserAdd($name,$email,$password);
-        if ($error) { 
-    print "Can't create account because: $error";
-        } else {
-          $action="base";
-          $run = 1;
-        }
-      }
-  print "<p><a href=\"pf.pl?act=base&run=1\">Return</a></p>";
-}
-
 
 
 #
@@ -356,38 +299,10 @@ if ($action ep "signup") {
 # This is the "document" that the JavaScript manipulates
 #
 #
-if ($action eq "base") { 
-  #
-  # Google maps API, needed to draw the map
-  #
-  print "<script src=\"http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js\" type=\"text/javascript\"></script>";
-  print "<script src=\"http://maps.googleapis.com/maps/api/js?sensor=false\" type=\"text/javascript\"></script>";
-  
-  #
-  # The Javascript portion of our app
-  #
-  print "<script type=\"text/javascript\" src=\"rwb.js\"> </script>";
+if ($action eq "portfolio") { 
+  my $main_pf_template = HTML::Template->new(filename => 'main_pf.html');
 
 
-
-  #
-  #
-  # And something to color (Red, White, or Blue)
-  #
-  print "<div id=\"color\" style=\"width:100\%; height:10\%\"></div>";
-
-  #
-  #
-  # And a map which will be populated later
-  #
-  print "<div id=\"map\" style=\"width:100\%; height:80\%\"></div>";
-  
-  # 
-  # creates checkboxes for opinions and individuals
-  print "<input type=\"checkbox\" name=\"committees\"> <label>View committee data?</label> <br>"; 
-  print "<input type=\"checkbox\" name=\"candidates\"> <label>View candidate data?</label> <br>";  
-  print "<input type=\"checkbox\" name=\"individuals\"> <label>View individual data?</label> <br>";
-  print "<input type=\"checkbox\" name=\"opinions\"> <label>View opinion data?</label> <br>";
 
   #make cycle checkboxes
   print "<h4>Choose election cycles:</h4>";
@@ -466,6 +381,8 @@ if ($action eq "base") {
     # invisible otherwise
     print "<div id=\"data\" style=\"display: none;\"></div>";
   }
+
+  print "Content-Type: text/html\n\n", $main_pf_template->output;
 
 }
 
@@ -1067,8 +984,6 @@ if ($debug) {
   }
   print "</menu>";
 }
-
-print end_html;
 
 #
 # The main line is finished at this point. 
