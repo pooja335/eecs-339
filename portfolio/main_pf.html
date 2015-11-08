@@ -1,4 +1,3 @@
-<link rel="stylesheet" href="portfolio.css">
 
 <!-- portfolio header when not editing -->
 <div class="pf-header">
@@ -11,6 +10,7 @@
 	<form>
 		<h1>Portfolio:
 			<input name="pf_name" value="<TMPL_VAR NAME=PF_NAME>">
+			<input type="hidden" name="act" value="portfolio">
 		</h1>
 		<button type="submit">Save</button>
 	</form>
@@ -34,5 +34,4 @@
 	</table>
 </div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
-<script type="text/javascript" src="portfolio.js"></script>
+

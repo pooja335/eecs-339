@@ -6,6 +6,7 @@ my $dbuser="pps860";
 my $dbpasswd="zaM7in9Wf";
 my @sqlinput=();
 my @sqloutput=();
+my $debug;
 
 #use Time::ParseDate;
 use CGI qw(:standard);
@@ -105,6 +106,7 @@ print "<head>";
 print "<title>PJH Portfolio Manager</title>";
 print "</head>";
 print "<body>";
+print "<link rel='stylesheet' href='portfolio.css'>";
 
 
 
@@ -157,10 +159,13 @@ if ($action eq "register") {
 if ($action eq "home") {
 	
 	print "Welcome to home!";
+  # query to get all portfolios of a user
 }
 
 if ($action eq "portfolio") { 
 	my $main_pf_template = HTML::Template->new(filename => 'main_pf.html');
+
+  # call query to get portfolio name and user email
 	my $portfolio_name = 'portfolio 1';
 	my $email = 'root@root.com';
 	# for each symbol in portfolio 
@@ -170,24 +175,47 @@ if ($action eq "portfolio") {
 	$main_pf_template->param(VOLATILITY => '');
 	$main_pf_template->param(CORRELATION => '');
 
-	my @holding_info = ExecSQL($dbuser, $dbpasswd,
-	  		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
-	  		     $portfolio_name, $email);
+  my $pf_name = param("pf_name");
+  # call query to update portfolio name
 
-  my $table_data = "hi";
-  print "HELLO" . Dumper($table_data, join(',',@holding_info));
-	foreach my $holding (@holding_info) {
+	# my @holding_info = ExecSQL($dbuser, $dbpasswd,
+	#   		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
+	#   		     $portfolio_name, $email);
+  my @holding_info = ExecSQL($dbuser, $dbpasswd,
+             "select * from holdings where portfolio_name='portfolio 1' and user_email='root\@root.com'","");
+
+  my $table_data = "";
+ #  print "HELLO" . Dumper($table_data, join(',',@holding_info));
+ #  print @holding_info;
+	# foreach my $holding (@holding_info) {
     # print "HELLO" + ref($holding) + @holding_info;
-    # $table_data += "<tr><td>"+$holding[0]+"</td><td>"+$holding[0]+"</td>"+
-    #     "<td><a href='portfolio.pl?act=edit_holding&holding_id=1></td>"+
-    #     "<td><a href='portfolio.pl?act=view_stats&holding_id=1></td></tr>";
-  }
+    $table_data = "<tr><td>AAPL</td><td>15</td>".
+    "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
+    "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
+  # }
   $main_pf_template->param(TABLE_DATA => $table_data);
 
 	print $main_pf_template->output;
 }
 
+if ($action eq "edit_holding") { 
+  my $edit_holding_template = HTML::Template->new(filename => 'edit_holding.html');
+  my $symbol = param("symbol");
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+  #query here to get number of shares
+  my $num_shares;
 
+  $edit_holding_template->param(SYMBOL => $symbol);
+  $edit_holding_template->param(NUM_SHARES => $num_shares);
+  if ($run) {
+    # query here to update number of shares
+  }
+  print $edit_holding_template->output;
+}
+
+print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
+print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
 print "</html>";
 
