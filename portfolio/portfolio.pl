@@ -199,7 +199,7 @@ sub ValidUser {
   	my @col;
   	
   	eval {@col=ExecSQL($dbuser, $dbpasswd, 
-  						"SELECT count(*) FROM users WHERE email=? AND password=?", "COL",
+  						"SELECT count(*) FROM pfusers WHERE email=? AND password=?", "COL",
   						$useremail, $password);
   	};
   	
@@ -208,13 +208,35 @@ sub ValidUser {
   	} else {
     	return $col[0]>0;
   	}
-}# Checks validity of login ###CHECK QUERY
+}# Checks validity of login
 
 sub UserAdd { 
   eval { ExecSQL($dbuser,$dbpasswd,
-		 "QUERY",undef,@_);};
+		 "INSERT INTO pfusers (name, email, password) VALUES (?, ?, ?)",undef,@_);};
   return $@;
-} # Adds new user (helps 'register' act) ###NEEDS QUERY
+} # Adds new user (helps 'register' act)
+
+sub AddPf {
+  eval { ExecSQL($dbuser,$dbpasswd,
+       "insert into portfolios (user_email, name, cash_account) values (?,?,?)",undef,@_);};
+    return $@;
+} # Adds pf for a user ##NEED TO CHECK THAT USER EXISTS, probably in function that calls this function
+
+sub UserPf {
+  my @rows;
+  eval { @rows = ExecSQL($dbuser, $dbpasswd, 
+              "select portfolios.name from portfolios where user_email= ?", "ROWS", 
+              @_); };
+  if ($@) { 
+    return (undef,$@);
+  } else {
+    return (MakeTable("portfolio_table",
+          "2D",
+         ["User email", "Portfolio name"],
+         @rows),$@);
+  }
+} # Selects all portfolios of a user
+
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
