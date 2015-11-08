@@ -1,3 +1,17 @@
+delete from pfusers;
+delete from portfolios;
+delete from holdings;
+delete from holdingHistory;
+delete from historicalData;
+
+commit;
+
+drop table historicalData;
+drop table holdingHistory;
+drop table holdings;
+drop table portfolios;
+drop table pfusers;
+
 create table pfusers (
 --
 	name varchar(64) not null,
@@ -75,7 +89,7 @@ create table holdingHistory (
 
 INSERT INTO pfusers (name, email, password) VALUES ('root', 'root@root.com', 'rootroot');
 
-INSERT INTO portfolios (user_email, name, cash_account) VALUES ('root@root.com', 'root', 100.00);
+INSERT INTO portfolios (user_email, name, cash_account) VALUES ('root@root.com', 'portfolio 1', 100.00);
 
 INSERT INTO holdings (symbol, user_email, portfolio_name, num_shares) VALUES ('APPL', 'root@root.com', 'portfolio 1', 1);
 
