@@ -1,80 +1,84 @@
-delete from users;
-delete from portfolios;
-delete from holdings;
-delete from holdingHistory;
-delete from historical_Data;
-
-commit;
-
-drop table historical_Data;
-drop table holdingHistory;
-drop table holdings;
-drop table portfolios;
-drop table users;
-
-
-create table users (
+create table pfusers (
+--
+	name varchar(64) not null,
+--
 	email varchar(256) not null primary key
 		constraint email_good CHECK (email LIKE '%@%'),
-	name varchar(64) not null,
+--
 	password varchar(64) NOT NULL
 	);
 
+
 create table portfolios (
-	user_email varchar(64) NOT NULL references users(email)	
+	user_email varchar(64) NOT NULL references pfusers(email)	
 		ON DELETE cascade,
-	name varchar(64) NOT NULL UNIQUE,	
-	cash_account number default 0 not null
-	-- constraint primary key (user_email, name)
+--
+	name varchar(64) NOT NULL,	
+--
+	cash_account number default 0 not null,
+--
+	constraint pf_unique UNIQUE(user_email, name)
 );
 
 create table holdings (
+--
 	symbol varchar(64) not null UNIQUE,
-	user_email varchar(64) NOT NULL references users(email)	
-	--references users or portfolios?
-		ON DELETE cascade,
-	portfolio_name varchar(64) NOT NULL references portfolios(name)
-		ON DELETE cascade,
-	num_shares NUMBER default 0 NOT NULL
-	-- constraint primary key (symbol, user_email, portfolio_name)
+--
+	user_email varchar(64) NOT NULL,
+--
+	portfolio_name varchar(64) NOT NULL,
+--
+	num_shares NUMBER default 0 NOT NULL,
+--
+	constraint holdings_ref FOREIGN KEY (user_email, portfolio_name) references portfolios(user_email, name),
+--
+	constraint holdings_unique UNIQUE(symbol, user_email, portfolio_name)
 );
 
-create table historical_Data (
+create table historicalData (
+	--
 	symbol varchar(64) NOT NULL unique,
-	timestamp varchar(64) NOT NULL unique, 	
-	--may use date and time variables instead of string
+	--
+	timstamp varchar(64) NOT NULL unique, 	
+	--
 	open number NOT NULL,
+	--
 	close number NOT NULL,
+	--
 	high number NOT NULL,
+	--
 	low number NOT NULL,
-	volume number
-	-- constraint primary key (symbol, timestamp)
+	--
+	volume number,
+	--
+	constraint hist_unique UNIQUE(symbol, timstamp)
 );
 
---may not need this table
 create table holdingHistory (
-	holding_symbol varchar(64) NOT NULL references holdings(symbol)
-		ON DELETE cascade,													
-		--might only need one of these symbols
-	histdata_symbol varchar(64) NOT NULL references historical_Data(symbol)
-		ON DELETE cascade,
-	timestamp varchar(64) NOT NULL references historical_Data(timestamp)
-		ON DELETE cascade,
-	user_email varchar(64) NOT NULL references users(email)
-		ON DELETE cascade,
-	pf_name varchar(64) NOT NULL references portfolios(name)
-		ON DELETE cascade
-	-- constraint primary key (holding_symbol, histdata_symbol, timestamp, user_email, pf_name)
+	--
+	holding_symbol varchar(64) NOT NULL,			
+	--										
+	histdata_symbol varchar(64) NOT NULL,
+	-- timestamp is a built in variable in sql, so use name timstamp
+	timstamp varchar(64) NOT NULL,
+	--
+	user_email varchar(64) NOT NULL,
+	--
+	pf_name varchar(64) NOT NULL,
+	--
+	constraint holdH_ref FOREIGN KEY (histdata_symbol, timstamp) references historicalData(symbol, timstamp),
+	--
+	constraint holdH_ref2 FOREIGN KEY (holding_symbol, user_email, pf_name) references holdings(symbol, user_email, portfolio_name),
+	--
+	constraint holdH_unique UNIQUE(holding_symbol, histdata_symbol, timstamp, user_email, pf_name)
 );
 
-INSERT INTO users (email, name, password) VALUES ('root@root.com', 'root', 'rootroot');
+INSERT INTO pfusers (name, email, password) VALUES ('root', 'root@root.com', 'rootroot');
 
-INSERT INTO portfolios (user_email, name, cash_account) VALUES ('root@root.com', 'portfolio 1', 0.00);
+INSERT INTO portfolios (user_email, name, cash_account) VALUES ('root@root.com', 'root', 100.00);
 
 INSERT INTO holdings (symbol, user_email, portfolio_name, num_shares) VALUES ('APPL', 'root@root.com', 'portfolio 1', 1);
 
-INSERT INTO historical_Data (symbol, timestamp, open, close, high, low, volume) VALUES ('APPL', '00:00:00', 5, 6, 10, 3, 1);
+--INSERT INTO holdingHistory (holding_symbol, histdata_symbol, timstamp, user_email, pf_name) VALUES ('APPL', 'APPL', '00:00:00', 'root@root.com', 'portfolio 1');
 
-INSERT INTO holdingHistory (holding_symbol, histdata_symbol, timestamp, user_email, pf_name) VALUES ('APPL', 'APPL', '00:00:00', 'root@root.com', 'portfolio 1');
-
--- CREATE VIEW histData as recent_data UNION ALL historical_Data;
+--CREATE VIEW histData as recent_data UNION ALL historicalData;
