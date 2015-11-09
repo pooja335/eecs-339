@@ -1,17 +1,16 @@
 #!/usr/bin/perl -w
 use strict;
-
+my $debug=0;
 use DBI;
 my $dbuser="pps860";
 my $dbpasswd="zaM7in9Wf";
 my @sqlinput=();
 my @sqloutput=();
-my $debug;
 
 #use Time::ParseDate;
 use CGI qw(:standard);
-use HTML::Template;
-use Data::Dumper;
+#use HTML::Template;
+#use Data::Dumper;
 
 
 
@@ -49,7 +48,7 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "portfolio";
+	$action = "login";
 	undef $outputsessioncookie;
 }
 
@@ -70,7 +69,7 @@ if ($action eq "login") {
 		undef $useremail;
 		undef $password;
 	}
-}
+} #check their input against DB, or just show the form
 
 
 if ($action eq "logout") {
@@ -79,7 +78,7 @@ if ($action eq "logout") {
   	undef $useremail;
   	undef $password;
   	$run = 0;
-}
+} # erase session cookie/email/pw, set act to login
 
 #send cookies to client
 my @outputcookies;
@@ -87,14 +86,14 @@ my @outputcookies;
 my $badcookie = cookie(-name => "badcookie",
 						-value => "badcookie",
 						-expires=>($deletecookie ? '-1h' : '+1h'));
-	push @outputcookies, $badcookie;
+	push @outputcookies, $badcookie;# test cookie
 
 if (defined($outputsessioncookie)) {
 	my $cookie = cookie(-name => $sessioncookie,
 						-value => $outputsessioncookie,
 						-expires=>($deletecookie ? '-1h' : '+1h'));
 	push @outputcookies, $cookie;
-}
+}# add the session cookie to outputs
 
 print header(-expires=>'now', -cookie=>\@outputcookies);
 
@@ -104,9 +103,13 @@ print header(-expires=>'now', -cookie=>\@outputcookies);
 print "<html>";
 print "<head>";
 print "<title>PJH Portfolio Manager</title>";
+
+print "<link rel=\"stylesheet\" href=\"portfolio.css\">";
+
+print "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js\"></script>";
+print "<script type=\"text/javascript\" src=\"portfolio.js\"></script>";
 print "</head>";
 print "<body>";
-print "<link rel='stylesheet' href='portfolio.css'>";
 
 
 
@@ -145,7 +148,7 @@ if ($action eq "register") {
 		my $name = param('name');
 		my $email = param('email');
 		my $password = param('password');
-		my $error = UserAdd($name, $password, $email);
+		my $error = UserAdd($name, $password, $email)
 		if ($error) {
 			print "Error: $error";
 		} else {
@@ -157,15 +160,20 @@ if ($action eq "register") {
 }
 
 if ($action eq "home") {
+   	print h2("Welcome to home!");
 	
-	print "Welcome to home!";
-  # query to get all portfolios of a user
+	my @portfolios;
+#	@portfolios = ExecSQL($dbuser, $dbpasswd, "QUERY", "COL");
+   
+   @portfolios = ("personal", "Holliday", "Pooja", "jack");
+   foreach my $pf (@portfolios) {
+		print "<a href=\"portfolio.pl?act=portfolio\" name=\"$pf\">$pf</button><br>";
+   }
+   print "<button name=\"newpf\">Add Portfolio</button>";		
 }
 
 if ($action eq "portfolio") { 
 	my $main_pf_template = HTML::Template->new(filename => 'main_pf.html');
-
-  # call query to get portfolio name and user email
 	my $portfolio_name = 'portfolio 1';
 	my $email = 'root@root.com';
 	# for each symbol in portfolio 
@@ -175,49 +183,24 @@ if ($action eq "portfolio") {
 	$main_pf_template->param(VOLATILITY => '');
 	$main_pf_template->param(CORRELATION => '');
 
-  my @holding_info = PfHoldings($email, $portfolio_name);
-  my $holding_info = @holding_info;
+	my @holding_info = ExecSQL($dbuser, $dbpasswd,
+	  		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
+	  		     $portfolio_name, $email);
 
-	# my @holding_info = ExecSQL($dbuser, $dbpasswd,
-	#   		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
-	#   		     $portfolio_name, $email);
-  # my @holding_info = ExecSQL($dbuser, $dbpasswd,
-             # "select * from holdings where portfolio_name='portfolio 1' and user_email='root\@root.com'",undef);
-
-  my $table_data = "";
-  print "HEHIGDJSKLFDSJKL".$holding_info;
- #  print "HELLO" . Dumper($table_data, join(',',@holding_info));
-  # print "HELLO".join(',', @holding_info);
-	for (my $i=0; $i < $holding_info; $i++) {
+  	my $table_data = "hi";
+  	print "HELLO" . Dumper($table_data, join(',',@holding_info));
+	foreach my $holding (@holding_info) {
     # print "HELLO" + ref($holding) + @holding_info;
-    # $table_data = "<tr><td>AAPL</td><td>15</td>".
-    # "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
-    # "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
-    print $holding_info[$i][0];
-  }
-  $main_pf_template->param(TABLE_DATA => $table_data);
+    # $table_data += "<tr><td>"+$holding[0]+"</td><td>"+$holding[0]+"</td>"+
+    #     "<td><a href='portfolio.pl?act=edit_holding&holding_id=1></td>"+
+    #     "<td><a href='portfolio.pl?act=view_stats&holding_id=1></td></tr>";
+  	}
+  	$main_pf_template->param(TABLE_DATA => $table_data);
 
 	print $main_pf_template->output;
 }
 
-if ($action eq "edit_holding") { 
-  my $edit_holding_template = HTML::Template->new(filename => 'edit_holding.html');
-  my $symbol = param("symbol");
-  my $user_email = param("user_email");
-  my $portfolio_name = param("portfolio_name");
-  #query here to get number of shares
-  my $num_shares;
 
-  $edit_holding_template->param(SYMBOL => $symbol);
-  $edit_holding_template->param(NUM_SHARES => $num_shares);
-  if ($run) {
-    # query here to update number of shares
-  }
-  print $edit_holding_template->output;
-}
-
-print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
-print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
 print "</html>";
 
@@ -229,7 +212,7 @@ sub ValidUser {
   	my @col;
   	
   	eval {@col=ExecSQL($dbuser, $dbpasswd, 
-  						"SELECT count(*) FROM pfusers WHERE email=? AND password=?", "COL",
+  						"SELECT count(*) FROM users WHERE email=? AND password=?", "COL",
   						$useremail, $password);
   	};
   	
@@ -238,69 +221,13 @@ sub ValidUser {
   	} else {
     	return $col[0]>0;
   	}
-}# Checks validity of login
+}# Checks validity of login ###CHECK QUERY
 
 sub UserAdd { 
   eval { ExecSQL($dbuser,$dbpasswd,
-		 "INSERT INTO pfusers (name, email, password) VALUES (?, ?, ?)",undef,@_);};
+		 "QUERY",undef,@_);};
   return $@;
-} # Adds new user (helps 'register' act)
-
-sub AddPf {
-  eval { ExecSQL($dbuser,$dbpasswd,
-       "insert into portfolios (user_email, name, cash_account) values (?,?,?)",undef,@_);};
-    return $@;
-} # Adds pf for a user ##NEED TO CHECK THAT USER EXISTS, probably in function that calls this function
-
-sub UserPf {
-  my @rows;
-  eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select portfolios.name from portfolios where user_email= ?", "ROW", 
-              @_); };
-  if ($@) { 
-    return (undef,$@);
-  } else {
-    return @rows;
-  }
-} # Selects all portfolios of a user
-
-sub PfHoldings {
-  my @rows;
-  eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", undef, 
-              @_); };
-  if ($@) { 
-    return (undef,$@);
-  } else {
-    return @rows;
-  }
-} # Selects all holdings associated with a portfolio
-
-sub PfShares {
-  my @rows;
-  eval { @rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? user_email=? and portfolio_name=?",undef,@_); };
-  if ($@) { 
-    return (undef,$@);
-  } else {
-    return @rows;
-  }
-} # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
-
-sub ChangeShares {
-  eval {ExecSQL($dbuser,$dbpasswd, "update holdings set num_shares=? where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
-  return $@;
-} # Updates the number of shares in a holding
-
-sub ChangeCash {
-  eval {ExecSQL($dbuser,$dbpasswd, "update portfolios set cash_account=? where user_email=? and name=?",undef,@_);};
-  return $@;
-} # Updates the cash account of a portfolio
-
-sub DelHolding {
-   eval {ExecSQL($dbuser,$dbpasswd, "delete from holdings where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
-  return $@;
-}
-
+} # Adds new user (helps 'register' act) ###NEEDS QUERY
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
@@ -312,7 +239,7 @@ sub DelHolding {
 # @fill are the fillers for positional parameters in $querystring
 #
 # ExecSQL executes "die" on failure.
-#
+
 sub ExecSQL {
   	my ($user, $passwd, $querystring, $type, @fill) =@_;
   	if ($debug) { 
