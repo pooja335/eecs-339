@@ -29,7 +29,7 @@ my $badlogin=0;
 my $action;
 my $run;
 
-#set action and run
+#set action and run vals
 if (defined(param("act"))) {
 	$action=param("act");
 	
@@ -39,9 +39,13 @@ if (defined(param("act"))) {
     	$run = 0;
   	}
 } else { # set default action
-	# hmmm... we don't have an anon user, might need to handle default differently than RWB
-	$action="login";
-  	$run = 0;
+	if(defined($inputsessioncookie)) { # if they're logged in send 'em home
+		$action="home";
+		$run=0;
+	} else { # otherwise lock 'em out
+		$action="login";
+  		$run = 0;
+	}
 }
 
 # handle session cookie
@@ -87,7 +91,7 @@ my @outputcookies;
 my $badcookie = cookie(-name => "badcookie",
 						-value => "badcookie",
 						-expires=>($deletecookie ? '-1h' : '+1h'));
-	push @outputcookies, $badcookie;
+	push @outputcookies, $badcookie; # dummy cookie for testing
 
 if (defined($outputsessioncookie)) {
 	my $cookie = cookie(-name => $sessioncookie,
@@ -158,6 +162,7 @@ if ($action eq "register") {
 
 if ($action eq "home") {
 	print h2("Welcome to home!");
+	print "<a href=\"portfolio.pl?act=logout\">Logout</a>";
   ($useremail, $password) = (param('useremail'), param('password'));
 	my @portfolios = UserPf($useremail);
 
@@ -238,10 +243,13 @@ if ($action eq "view_stats") {
   print $view_stats_template->output;
 }
 
+
+#end the page
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
 print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
 print "</html>";
+
 
 
 ########################################### HELPER FUNCTIONS ###########################################
