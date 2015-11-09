@@ -2,8 +2,8 @@
 use strict;
 
 use DBI;
-my $dbuser="hls262";
-my $dbpasswd="zdrih9KN8";
+my $dbuser="pps860";
+my $dbpasswd="zaM7in9Wf";
 my @sqlinput=();
 my @sqloutput=();
 my $debug;
@@ -158,18 +158,31 @@ if ($action eq "register") {
 
 if ($action eq "home") {
 	
-	print "Welcome to home!";
-  ($useremail, $password) = (param('useremail'), param('password'));
-  my ($table,$error);
-  ($table,$error)=UserPf($useremail);
-  if (!$error) { 
-    print "<h2>Portfolios</h2>$table";
-      }
-  else{
-    print "<h2>Can't display portfolios because $error</h2>";
-    $action="login";
-    $run = 0;
-  }
+	print h2("Welcome to home!");
+	my @portfolios;
+	$useremail="root@root.com";
+	@portfolios = ExecSQL($dbuser, $dbpasswd, 
+              "select portfolios.name from portfolios where user_email= ?", "ROW", 
+              $useremail);
+# 	@portfolios = ("personal", "Holliday", "Pooja", "jack");
+
+	print h2("Portfolios");
+    foreach my $pf (@portfolios) {
+		print "<a href=\"portfolio.pl?act=portfolio\" name=\"$pf\">$pf</button><br>";
+	}
+	print "<button name=\"newpf\">Add Portfolio</button>";
+	
+#   ($useremail, $password) = (param('useremail'), param('password'));
+#   my ($table,$error);
+#   ($table,$error)=UserPf($useremail);
+#   if (!$error) { 
+#     print "<h2>Portfolios</h2>$table";
+#       }
+#   else{
+#     print "<h2>Can't display portfolios because $error</h2>";
+#     $action="login";
+#     $run = 0;
+#   }
 }
 
 if ($action eq "portfolio") { 
