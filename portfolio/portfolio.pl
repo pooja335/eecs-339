@@ -175,7 +175,7 @@ if ($action eq "home") {
 if ($action eq "portfolio") { 
 	my $main_pf_template = HTML::Template->new(filename => 'main_pf.html');
 
-  # call query to get portfolio name and user email
+  # get portfolio name and user email from params
 	my $portfolio_name = 'portfolio 1';
 	my $email = 'root@root.com';
 	# for each symbol in portfolio 
@@ -188,26 +188,11 @@ if ($action eq "portfolio") {
   my @holding_info = PfHoldings($email, $portfolio_name);
   my $holding_info = @holding_info;
 
-	# my @holding_info = ExecSQL($dbuser, $dbpasswd,
-	#   		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
-	#   		     $portfolio_name, $email);
-  # my @holding_info = ExecSQL($dbuser, $dbpasswd,
-             # "select * from holdings where portfolio_name='portfolio 1' and user_email='root\@root.com'",undef);
-
   my $table_data = "";
-  print "HEHIGDJSKLFDSJKL".$holding_info;
- #  print "HELLO" . Dumper($table_data, join(',',@holding_info));
-  # print "HELLO".join(',', @holding_info);
 	for (my $i=0; $i < $holding_info; $i++) {
-    # print "HELLO" + ref($holding) + @holding_info;
-    $table_data = "<tr><td>APPL</td><td>15</td>".
-    "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
+    $table_data = $table_data."<tr><td>".$holding_info[$i][0]."</td><td>".$holding_info[$i][1]."</td>".
+    "<td><a href='portfolio.pl?act=edit_holding&symbol=".$holding_info[$i][0]."&user_email=".$email."&portfolio_name=".$portfolio_name."'>Edit</a></td>".
     "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
-  # }
-    # $table_data = "<tr><td>AAPL</td><td>15</td>".
-    # "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
-    # "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
-    print $holding_info[$i][0];
   }
   $main_pf_template->param(TABLE_DATA => $table_data);
 
@@ -219,13 +204,13 @@ if ($action eq "edit_holding") {
   my $symbol = param("symbol");
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
-  #query here to get number of shares
-  my $num_shares;
+  my $num_shares = PfShares($symbol, $user_email, $portfolio_name);
+  print $num_shares;
 
   $edit_holding_template->param(SYMBOL => $symbol);
   $edit_holding_template->param(NUM_SHARES => $num_shares);
   if ($run) {
-    # query here to update number of shares
+    ChangeShares($symbol, $user_email, $portfolio_name);
   }
   print $edit_holding_template->output;
 }
@@ -291,12 +276,12 @@ sub PfHoldings {
 } # Selects all holdings associated with a portfolio
 
 sub PfShares {
-  my @rows;
-  eval { @rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? user_email=? and portfolio_name=?",undef,@_); };
+  my $rows;
+  eval { $rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? and user_email=? and portfolio_name=?",undef,@_); };
   if ($@) { 
     return (undef,$@);
   } else {
-    return @rows;
+    return $rows;
   }
 } # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
 
