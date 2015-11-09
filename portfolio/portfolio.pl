@@ -58,11 +58,8 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-<<<<<<< HEAD
 	$action = "edit_holding";
-=======
 	$action = "login";
->>>>>>> origin/master
 	undef $outputsessioncookie;
 }
 
@@ -252,7 +249,6 @@ if ($action eq "view_stats") {
   print $view_stats_template->output;
 }
 
-<<<<<<< HEAD
 # if ($action eq "predictions"){
 #     print "<h2>Yesterday's Market Summary</h2>";
 #     my $predictions_generator = 
@@ -332,10 +328,7 @@ if ($action eq "view_stats") {
     # print $futureimage->png;
 #}
 
-=======
-
 #end the page
->>>>>>> origin/master
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
 print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
