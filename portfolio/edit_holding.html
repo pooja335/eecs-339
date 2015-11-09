@@ -1,8 +1,13 @@
 <h1>Edit <TMPL_VAR NAME=SYMBOL> Holding</h1>
 <form>
 	<h4>
+		<p>Update the number of your <TMPL_VAR NAME=SYMBOL> shares</p>
 		<input type="text" name="num_shares" value="<TMPL_VAR NAME=NUM_SHARES>">
 		<input type="hidden" name="run" value="1">
+		<input type="hidden" name="act" value="edit_holding">
+		<input type="hidden" name="symbol" value="<TMPL_VAR NAME=SYMBOL>">
+		<input type="hidden" name="user_email" value="<TMPL_VAR NAME=USER_EMAIL>">
+		<input type="hidden" name="portfolio_name" value="<TMPL_VAR NAME=PORTFOLIO_NAME>">
 	</h4>
 	<button type="submit">Save</button>
 </form>
