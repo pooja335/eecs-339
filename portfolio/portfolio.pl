@@ -269,9 +269,9 @@ if ($action eq "edit_cash") {
   $edit_cash_template->param(PORTFOLIO_NAME => $portfolio_name);
   $edit_cash_template->param(CASH_ACCOUNT => @cash);
   if ($run) {
-    print "Cash account successfully updated.";
     my $cash = param("cash");
     if ($cash >= 0) {
+      print "Cash account successfully updated.";
       ChangeCash($cash, $user_email, $portfolio_name);
     }
     else {
