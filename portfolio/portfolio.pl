@@ -49,7 +49,7 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "login";
+	$action = "portfolio";
 	undef $outputsessioncookie;
 }
 
@@ -183,24 +183,33 @@ if ($action eq "portfolio") {
 	$main_pf_template->param(VOLATILITY => '');
 	$main_pf_template->param(CORRELATION => '');
 
-  my $pf_name = param("pf_name");
-  # call query to update portfolio name
+  my @holding_info = PfHoldings($email, $portfolio_name);
+  my $holding_info = @holding_info;
 
 	# my @holding_info = ExecSQL($dbuser, $dbpasswd,
 	#   		     "select symbol, num_shares from holdings where portfolio_name=? and user_email=?","COL",
 	#   		     $portfolio_name, $email);
-  my @holding_info = ExecSQL($dbuser, $dbpasswd,
-             "select * from holdings where portfolio_name='portfolio 1' and user_email='root\@root.com'","");
+  # my @holding_info = ExecSQL($dbuser, $dbpasswd,
+             # "select * from holdings where portfolio_name='portfolio 1' and user_email='root\@root.com'",undef);
 
   my $table_data = "";
+  print "HEHIGDJSKLFDSJKL".$holding_info;
  #  print "HELLO" . Dumper($table_data, join(',',@holding_info));
- #  print @holding_info;
-	# foreach my $holding (@holding_info) {
+  # print "HELLO".join(',', @holding_info);
+	for (my $i=0; $i < $holding_info; $i++) {
     # print "HELLO" + ref($holding) + @holding_info;
+<<<<<<< HEAD
     $table_data = "<tr><td>APPL</td><td>15</td>".
     "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
     "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
   # }
+=======
+    # $table_data = "<tr><td>AAPL</td><td>15</td>".
+    # "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
+    # "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
+    print $holding_info[$i][0];
+  }
+>>>>>>> origin/master
   $main_pf_template->param(TABLE_DATA => $table_data);
 
 	print $main_pf_template->output;
@@ -261,43 +270,36 @@ sub AddPf {
 sub UserPf {
   my @rows;
   eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select portfolios.name from portfolios where user_email= ?", "ROWS", 
+              "select portfolios.name from portfolios where user_email= ?", "ROW", 
               @_); };
   if ($@) { 
     return (undef,$@);
   } else {
-    return (MakeTable("portfolio_table",
-          "2D",
-         ["User email", "Portfolio name"],
-         @rows),$@);
+    return @rows;
   }
 } # Selects all portfolios of a user
 
 sub PfHoldings {
   my @rows;
   eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", "ROWS", 
+              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", undef, 
               @_); };
   if ($@) { 
     return (undef,$@);
   } else {
-    return (MakeTable("holdings_table",
-          "2D",
-         ["Symbol", "Number of Shares"],
-         @rows),$@);
+    return @rows;
   }
 } # Selects all holdings associated with a portfolio
 
 sub PfShares {
-  eval {ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? user_email=? and portfolio_name=?",undef,@_);};
-  return $@;
+  my @rows;
+  eval { @rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? user_email=? and portfolio_name=?",undef,@_); };
+  if ($@) { 
+    return (undef,$@);
+  } else {
+    return @rows;
+  }
 } # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
-
-sub ChangePfName {
-  my ($newname, $useremail, $oldname)=@_;
-  eval {ExecSQL($dbuser,$dbpasswd, "update portfolios set name=? where user_email=? and name=?",undef,$newname, $useremail, $oldname);};
-  return $@;
-} # Updates portfolio name
 
 sub ChangeShares {
   eval {ExecSQL($dbuser,$dbpasswd, "update holdings set num_shares=? where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
@@ -313,6 +315,7 @@ sub DelHolding {
    eval {ExecSQL($dbuser,$dbpasswd, "delete from holdings where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
   return $@;
 }
+
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
 #
