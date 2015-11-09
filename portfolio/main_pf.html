@@ -1,6 +1,6 @@
 
 <div class="pf-header">
-	<h1>Portfolio: <TMPL_VAR NAME=PF_NAME></h1>
+	<h1>Portfolio: <TMPL_VAR NAME=PORTFOLIO_NAME></h1>
 </div>
 
 <div class="pf-info">
@@ -19,6 +19,7 @@
 		</tr>
 		<TMPL_VAR NAME=TABLE_DATA>	
 	</table>
+	<a href="portfolio.pl?act=add_holding&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Add Stock</a>
 </div>
 
 

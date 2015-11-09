@@ -1,0 +1,18 @@
+<h1>Add New Holding</h1>
+<form>
+	<h4>
+		<p>Company symbol:</p>
+		<input type="text" name="symbol">
+		<p>Number of shares:</p>
+		<input type="text" name="num_shares">
+		<input type="hidden" name="run" value="1">
+		<input type="hidden" name="act" value="add_holding">
+		<input type="hidden" name="user_email" value="<TMPL_VAR NAME=USER_EMAIL>">
+		<input type="hidden" name="portfolio_name" value="<TMPL_VAR NAME=PORTFOLIO_NAME>">
+	</h4>
+	<button type="submit">Save</button>
+</form>
+<a href="portfolio.pl?act=portfolio&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Go Back</a>
+
+
+

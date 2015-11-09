@@ -201,7 +201,8 @@ if ($action eq "portfolio") {
     }
   }
 
-  $main_pf_template->param(PF_NAME => $portfolio_name);
+  $main_pf_template->param(USER_EMAIL => $user_email);
+  $main_pf_template->param(PORTFOLIO_NAME => $portfolio_name);
   $main_pf_template->param(VALUE => $marketval);
   $main_pf_template->param(VOLATILITY => '');
   $main_pf_template->param(CORRELATION => '');
@@ -222,6 +223,7 @@ if ($action eq "edit_holding") {
   $edit_holding_template->param(PORTFOLIO_NAME => $portfolio_name);
   $edit_holding_template->param(NUM_SHARES => @num_shares);
   if ($run) {
+    print "Stock successfully updated.";
     my $num_shares = param("num_shares");
     if ($num_shares == 0) {
       DelHolding($user_email, $portfolio_name, $symbol);
@@ -232,6 +234,26 @@ if ($action eq "edit_holding") {
     $edit_holding_template->param(NUM_SHARES => $num_shares);
   }
   print $edit_holding_template->output;
+}
+
+if ($action eq "add_holding") { 
+  my $add_holding_template = HTML::Template->new(filename => 'add_holding.html');
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+
+  $add_holding_template->param(USER_EMAIL => $user_email);
+  $add_holding_template->param(PORTFOLIO_NAME => $portfolio_name);
+
+  if ($run) {
+    print "Stock successfully added. Add another?";
+    my $symbol = param("symbol");
+    my $num_shares = param("num_shares");
+    if ($num_shares != 0) {
+      AddHolding($symbol, $user_email, $portfolio_name, $num_shares);
+    }
+    # $add_holding_template->param(NUM_SHARES => $num_shares);
+  }
+  print $add_holding_template->output;
 }
 
 if ($action eq "view_stats") { 
@@ -415,6 +437,12 @@ sub DelHolding {
    eval {ExecSQL($dbuser,$dbpasswd, "delete from holdings where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
   return $@;
 }
+
+sub AddHolding {
+  eval { ExecSQL($dbuser,$dbpasswd,
+       "insert into holdings (symbol, user_email, portfolio_name, num_shares) values (?,?,?,?)",undef,@_);};
+    return $@;
+} # Adds pf for a user ##NEED TO CHECK THAT USER EXISTS, probably in function that calls this function
 
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
