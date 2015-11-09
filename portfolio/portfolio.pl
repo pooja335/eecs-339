@@ -2,8 +2,8 @@
 use strict;
 
 use DBI;
-my $dbuser="pps860";
-my $dbpasswd="zaM7in9Wf";
+my $dbuser="hls262";
+my $dbpasswd="zdrih9KN8";
 my @sqlinput=();
 my @sqloutput=();
 my $debug;
@@ -144,7 +144,7 @@ if ($action eq "register") {
 	} else {
 		my $name = param('name');
 		my $email = param('email');
-		my password = param('password');
+		my $password = param('password');
 		my $error = UserAdd($name, $password, $email);
 		if ($error) {
 			print "Error: $error";
@@ -159,7 +159,15 @@ if ($action eq "register") {
 if ($action eq "home") {
 	
 	print "Welcome to home!";
-  # query to get all portfolios of a user
+  ($useremail, $password) = (param('useremail'), param('password'));
+  my ($table,$error);
+  ($table,$error)=UserPf($useremail, $password);
+  if (!$error) { 
+    print "<h2>Available Permissions</h2>$table";
+      }
+  else{
+    
+  }
 }
 
 if ($action eq "portfolio") { 
@@ -189,7 +197,7 @@ if ($action eq "portfolio") {
  #  print @holding_info;
 	# foreach my $holding (@holding_info) {
     # print "HELLO" + ref($holding) + @holding_info;
-    $table_data = "<tr><td>AAPL</td><td>15</td>".
+    $table_data = "<tr><td>APPL</td><td>15</td>".
     "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
     "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
   # }
