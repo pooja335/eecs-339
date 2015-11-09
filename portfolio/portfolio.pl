@@ -12,7 +12,12 @@ my $debug;
 use CGI qw(:standard);
 use HTML::Template;
 use Data::Dumper;
+use Getopt::Long;
+use Time::ParseDate;
+use Time::CTime;
+use FileHandle;
 
+#use stock_data_access;
 
 
 # receive cookies from client
@@ -49,7 +54,7 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "home";
+	$action = "edit_holding";
 	undef $outputsessioncookie;
 }
 
@@ -214,6 +219,85 @@ if ($action eq "edit_holding") {
   }
   print $edit_holding_template->output;
 }
+
+# if ($action eq "predictions"){
+#     print "<h2>Yesterday's Market Summary</h2>";
+#     my $predictions_generator = 
+#     my ($open, $high, $low, $close, $volume); ##need to pull from historical data
+#     my $notime = 0;
+#     my $plot = 1;
+#     my $from; # allow user to select dates, what is the format of timestamp??
+#     my $to;
+#     if (defined $from) { $from=parsedate($from); }
+#     if (defined $to) { $to=parsedate($to); }
+
+
+#     $usage = "usage: get_data.pl [--open] [--high] [--low] [--close] [--vol] [--from=time] [--to=time] [--plot] SYMBOL\n";
+
+#     $#ARGV == 0 or die $usage;
+
+#     $symbol = shift;
+
+#     push @fields, "timestamp" if !$notime;
+#     push @fields, "open" if $open;
+#     push @fields, "high" if $high;
+#     push @fields, "low" if $low;
+#     push @fields, "close" if $close;
+#     push @fields, "volume" if $vol;
+
+
+#     my $sql;
+
+#     $sql = "select " . join(",",@fields) . " from ".GetStockPrefix()."StocksDaily";
+#     $sql.= " where symbol = '$symbol'";
+#     $sql.= " and timestamp >= $from" if $from;
+#     $sql.= " and timestamp <= $to" if $to;
+#     $sql.= " order by timestamp";
+
+#     my $data = ExecStockSQL("TEXT",$sql);
+
+#     if (!$plot) { 
+#       print $data;
+#     } else {
+
+#       open(DATA,">_plot.in") or die "Cannot open temporary file for plotting\n";
+#       print DATA $data;
+#       close(DATA);
+
+#       open(GNUPLOT, "|gnuplot") or die "Cannot open gnuplot for plotting\n";
+#       GNUPLOT->autoflush(1);
+#       print GNUPLOT "set title '$symbol'\nset xlabel 'time'\nset ylabel 'data'\n";
+#       print GNUPLOT "plot '_plot.in' with linespoints;\n";
+#       STDIN->autoflush(1);
+#       <STDIN>;
+#     }
+
+    # my @past_data = [[1, 2, 3, 4, 5], [20, 25, 23, 20, 21]]; ##need query for timestamp and close price from historical data
+    # my $pastgraph = GD::Graph::lines->new(500, 300);
+    # $pastgraph->set(
+    #     x_label     => 'Date',
+    #     y_label     => 'Closing Price',
+    #     title       => 'Past Performance',
+    # ) or warn $pastgraph->error;
+
+    # my $pastimage = $pastgraph->plot(\@data) or die $pastgraph->error;
+
+    # print "Content-type: image/png\n\n";
+    # print $pastimage->png;
+
+    # my @future_data = [[6, 7, 8, 9, 10], [23, 24, 26, 25, 27]];##need to pull from provided script
+    # my $futuregraph = GD::Graph::lines->new(500, 300);
+    # $futuregraph->set(
+    #     x_label     => 'Date',
+    #     y_label     => 'Closing Price',
+    #     title       => 'Past Performance',
+    # ) or warn $futuregraph->error;
+
+    # my $futureimage = $futuregraph->plot(\@data) or die $futuregraph->error;
+
+    # print "Content-type: image/png\n\n";
+    # print $futureimage->png;
+#}
 
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
 print "<script type='text/javascript' src='portfolio.js'></script>";
