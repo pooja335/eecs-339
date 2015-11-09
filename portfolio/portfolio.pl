@@ -49,7 +49,7 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "portfolio";
+	$action = "home";
 	undef $outputsessioncookie;
 }
 
@@ -161,12 +161,14 @@ if ($action eq "home") {
 	print "Welcome to home!";
   ($useremail, $password) = (param('useremail'), param('password'));
   my ($table,$error);
-  ($table,$error)=UserPf($useremail, $password);
+  ($table,$error)=UserPf($useremail);
   if (!$error) { 
-    print "<h2>Available Permissions</h2>$table";
+    print "<h2>Portfolios</h2>$table";
       }
   else{
-    
+    print "<h2>Can't display portfolios because $error</h2>";
+    $action="login";
+    $run = 0;
   }
 }
 
@@ -198,18 +200,15 @@ if ($action eq "portfolio") {
   # print "HELLO".join(',', @holding_info);
 	for (my $i=0; $i < $holding_info; $i++) {
     # print "HELLO" + ref($holding) + @holding_info;
-<<<<<<< HEAD
     $table_data = "<tr><td>APPL</td><td>15</td>".
     "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
     "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
   # }
-=======
     # $table_data = "<tr><td>AAPL</td><td>15</td>".
     # "<td><a href='portfolio.pl?act=edit_holding&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>Edit</a></td>".
     # "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
     print $holding_info[$i][0];
   }
->>>>>>> origin/master
   $main_pf_template->param(TABLE_DATA => $table_data);
 
 	print $main_pf_template->output;
