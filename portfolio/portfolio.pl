@@ -27,7 +27,7 @@ my $inputsessioncookie = cookie($sessioncookie);
 
 my $outputsessioncookie = undef;
 my $deletecookie=0;
-my $useremail = undef;
+my $user_email = undef;
 my $password = undef;
 my $badlogin=0;
 
@@ -55,7 +55,7 @@ if (defined(param("act"))) {
 
 # handle session cookie
 if (defined($inputsessioncookie)) {
-	($useremail,$password) = split(/\//,$inputsessioncookie);
+	($user_email,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
 	$action = "edit_holding";
@@ -65,9 +65,9 @@ if (defined($inputsessioncookie)) {
 
 if ($action eq "login") {
 	if ($run) {#if login attempt
-		($useremail, $password) = (param('useremail'), param('password'));
-		if ( ValidUser($useremail, $password )) {
-			$outputsessioncookie = join("/",$useremail,$password);
+		($user_email, $password) = (param('user_email'), param('password'));
+		if ( ValidUser($user_email, $password )) {
+			$outputsessioncookie = join("/",$user_email,$password);
 			$action = "home";
 			$run = 1;
  		} else { #try again with empty form
@@ -77,7 +77,7 @@ if ($action eq "login") {
 		}
 	} else { #just show the form
 		undef $inputsessioncookie;
-		undef $useremail;
+		undef $user_email;
 		undef $password;
 	}
 }
@@ -86,7 +86,7 @@ if ($action eq "login") {
 if ($action eq "logout") {
   	$deletecookie=1;
   	$action = "login";
-  	undef $useremail;
+  	undef $user_email;
   	undef $password;
   	$run = 0;
 }
@@ -127,7 +127,7 @@ if ($action eq "login") {
 	print h2('Login to PJH Portfolio Manager');
   	if ($badlogin or !$run) { 
     	print start_form(-name=>'Login'),
-				"Email:",textfield(-name=>'useremail'),	p,
+				"Email:",textfield(-name=>'user_email'),	p,
 	  			"Password:",password_field(-name=>'password'),p,
 	    		hidden(-name=>'act',default=>['login']),
 	      		hidden(-name=>'run',default=>['1']),
@@ -145,7 +145,7 @@ if ($action eq "register") {
 		print h2('Register New Account');
 		print start_form(-name=>'Register'),
 					"Name:", textfield(-name=>'name'), p,
-					"Email:", textfield(-name=>'useremail'), p,
+					"Email:", textfield(-name=>'user_email'), p,
 	  				"Password:", password_field(-name=>'password'), p,
 	    			hidden(-name=>'act',default=>['register']),
 	      			hidden(-name=>'run',default=>['1']),
@@ -153,9 +153,9 @@ if ($action eq "register") {
 		  			end_form;
 	} else {
 		my $name = param('name');
-		my $email = param('email');
+		my $user_email = param('user_email');
 		my $password = param('password');
-		my $error = UserAdd($name, $password, $email);
+		my $error = UserAdd($name, $password, $user_email);
 		if ($error) {
 			print "Error: $error";
 		} else {
@@ -169,12 +169,12 @@ if ($action eq "register") {
 if ($action eq "home") {
 	print h2("Welcome to home!");
 	print "<a href=\"portfolio.pl?act=logout\">Logout</a>";
-  ($useremail, $password) = (param('useremail'), param('password'));
-	my @portfolios = UserPf($useremail);
+  ($user_email, $password) = (param('user_email'), param('password'));
+	my @portfolios = UserPf($user_email);
 
 	print h2("Portfolios");
   foreach my $pf (@portfolios) {
-		print "<a href=\"portfolio.pl?act=portfolio\" portfolio_name=\"$pf\">$pf</a><br>";
+		print "<a href=\"portfolio.pl?act=portfolio&portfolio_name=$pf&user_email=$user_email\">$pf</a><br>";
 	}
 	print "<button name=\"newpf\">Add Portfolio</button>";
 }
@@ -182,28 +182,29 @@ if ($action eq "home") {
 if ($action eq "portfolio") { 
 	my $main_pf_template = HTML::Template->new(filename => 'main_pf.html');
 
-  # get portfolio name and user email from params
-	my $portfolio_name = 'portfolio 1';
-	my $email = 'root@root.com';
+	my $portfolio_name = param("portfolio_name");
+	my $user_email = param("user_email");
 
-  # for each symbol in portfolio 
-  #   marketval += close;
-
-	$main_pf_template->param(PF_NAME => $portfolio_name);
-	$main_pf_template->param(VALUE => '');
-	$main_pf_template->param(VOLATILITY => '');
-	$main_pf_template->param(CORRELATION => '');
-
-  my @holding_info = PfHoldings($email, $portfolio_name);
+  my @holding_info = PfHoldings($user_email, $portfolio_name);
   my $holding_info = @holding_info;
 
   my $table_data = "";
+  my $marketval = 0;
 	for (my $i=0; $i < $holding_info; $i++) {
     $table_data = $table_data."<tr><td>".$holding_info[$i][0]."</td><td>".$holding_info[$i][1]."</td>".
-    "<td><a href='portfolio.pl?act=edit_holding&symbol=".$holding_info[$i][0]."&user_email=".$email."&portfolio_name=".$portfolio_name."'>Edit</a></td>".
-    "<td><a href='portfolio.pl?act=view_stats&symbol=".$holding_info[$i][0]."&user_email=".$email."&portfolio_name=".$portfolio_name."'>View Stats</a></td>";
+    "<td><a href='portfolio.pl?act=edit_holding&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>Edit</a></td>".
+    "<td><a href='portfolio.pl?act=view_stats&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>View Stats</a></td>";
 
+    my $output = `~pdinda/339/HANDOUT/portfolio/quote.pl $holding_info[$i][0]`;
+    if ($output =~ /close\t([0-9\.]+)/) {
+      $marketval += $1 * $holding_info[$i][1];
+    }
   }
+
+  $main_pf_template->param(PF_NAME => $portfolio_name);
+  $main_pf_template->param(VALUE => $marketval);
+  $main_pf_template->param(VOLATILITY => '');
+  $main_pf_template->param(CORRELATION => '');
   $main_pf_template->param(TABLE_DATA => $table_data);
 
 	print $main_pf_template->output;
@@ -339,12 +340,12 @@ print "</html>";
 ########################################### HELPER FUNCTIONS ###########################################
 
 sub ValidUser {
-	my ($useremail,$password)=@_;
+	my ($user_email,$password)=@_;
   	my @col;
   	
   	eval {@col=ExecSQL($dbuser, $dbpasswd, 
   						"SELECT count(*) FROM pfusers WHERE email=? AND password=?", "COL",
-  						$useremail, $password);
+  						$user_email, $password);
   	};
   	
   	if ($@) { 
