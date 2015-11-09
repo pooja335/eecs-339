@@ -186,7 +186,7 @@ if ($action eq "portfolio") {
 	my $user_email = param("user_email");
 
   my @holding_info = PfHoldings($user_email, $portfolio_name);
-  my $holding_info = @holding_info;
+  my $holding_info = @holding_info; 
 
   my $table_data = "";
   my $marketval = 0;
@@ -201,12 +201,15 @@ if ($action eq "portfolio") {
     }
   }
 
+  my @cash = PfCash($user_email, $portfolio_name);
+
   $main_pf_template->param(USER_EMAIL => $user_email);
   $main_pf_template->param(PORTFOLIO_NAME => $portfolio_name);
   $main_pf_template->param(VALUE => $marketval);
   $main_pf_template->param(VOLATILITY => '');
   $main_pf_template->param(CORRELATION => '');
   $main_pf_template->param(TABLE_DATA => $table_data);
+  $main_pf_template->param(CASH_ACCOUNT => @cash);
 
 	print $main_pf_template->output;
 }
@@ -254,6 +257,29 @@ if ($action eq "add_holding") {
     # $add_holding_template->param(NUM_SHARES => $num_shares);
   }
   print $add_holding_template->output;
+}
+
+if ($action eq "edit_cash") { 
+  my $edit_cash_template = HTML::Template->new(filename => 'edit_cash.html');
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+  my @cash = PfCash($user_email, $portfolio_name);
+
+  $edit_cash_template->param(USER_EMAIL => $user_email);
+  $edit_cash_template->param(PORTFOLIO_NAME => $portfolio_name);
+  $edit_cash_template->param(CASH_ACCOUNT => @cash);
+  if ($run) {
+    print "Cash account successfully updated.";
+    my $cash = param("cash");
+    if ($cash >= 0) {
+      ChangeCash($cash, $user_email, $portfolio_name);
+    }
+    else {
+      print "You can not have a negative value";
+    }
+    $edit_cash_template->param(CASH_ACCOUNT => $cash);
+  }
+  print $edit_cash_template->output;
 }
 
 if ($action eq "view_stats") { 
@@ -422,6 +448,16 @@ sub PfShares {
     return @rows;
   }
 } # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
+
+sub PfCash {
+  my @rows;
+  eval { @rows = ExecSQL($dbuser,$dbpasswd, "select cash_account from portfolios where user_email=? and name=?","COL",@_); };
+  if ($@) { 
+    return (undef,$@);
+  } else {
+    return @rows;
+  }
+} # Selects the cash account for a given portfolio
 
 sub ChangeShares {
   eval {ExecSQL($dbuser,$dbpasswd, "update holdings set num_shares=? where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
