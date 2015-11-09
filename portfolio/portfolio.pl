@@ -2,8 +2,8 @@
 use strict;
 
 use DBI;
-my $dbuser="hls262";
-my $dbpasswd="zdrih9KN8";
+my $dbuser="pps860";
+my $dbpasswd="zaM7in9Wf";
 my @sqlinput=();
 my @sqloutput=();
 my $debug;
@@ -34,7 +34,7 @@ my $badlogin=0;
 my $action;
 my $run;
 
-#set action and run
+#set action and run vals
 if (defined(param("act"))) {
 	$action=param("act");
 	
@@ -44,9 +44,13 @@ if (defined(param("act"))) {
     	$run = 0;
   	}
 } else { # set default action
-	# hmmm... we don't have an anon user, might need to handle default differently than RWB
-	$action="login";
-  	$run = 0;
+	if(defined($inputsessioncookie)) { # if they're logged in send 'em home
+		$action="home";
+		$run=0;
+	} else { # otherwise lock 'em out
+		$action="login";
+  		$run = 0;
+	}
 }
 
 # handle session cookie
@@ -54,7 +58,11 @@ if (defined($inputsessioncookie)) {
 	($useremail,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
+<<<<<<< HEAD
 	$action = "edit_holding";
+=======
+	$action = "login";
+>>>>>>> origin/master
 	undef $outputsessioncookie;
 }
 
@@ -92,7 +100,7 @@ my @outputcookies;
 my $badcookie = cookie(-name => "badcookie",
 						-value => "badcookie",
 						-expires=>($deletecookie ? '-1h' : '+1h'));
-	push @outputcookies, $badcookie;
+	push @outputcookies, $badcookie; # dummy cookie for testing
 
 if (defined($outputsessioncookie)) {
 	my $cookie = cookie(-name => $sessioncookie,
@@ -162,19 +170,16 @@ if ($action eq "register") {
 }
 
 if ($action eq "home") {
-	
-	print "Welcome to home!";
+	print h2("Welcome to home!");
+	print "<a href=\"portfolio.pl?act=logout\">Logout</a>";
   ($useremail, $password) = (param('useremail'), param('password'));
-  my ($table,$error);
-  ($table,$error)=UserPf($useremail);
-  if (!$error) { 
-    print "<h2>Portfolios</h2>$table";
-      }
-  else{
-    print "<h2>Can't display portfolios because $error</h2>";
-    $action="login";
-    $run = 0;
-  }
+	my @portfolios = UserPf($useremail);
+
+	print h2("Portfolios");
+  foreach my $pf (@portfolios) {
+		print "<a href=\"portfolio.pl?act=portfolio\" portfolio_name=\"$pf\">$pf</a><br>";
+	}
+	print "<button name=\"newpf\">Add Portfolio</button>";
 }
 
 if ($action eq "portfolio") { 
@@ -183,8 +188,10 @@ if ($action eq "portfolio") {
   # get portfolio name and user email from params
 	my $portfolio_name = 'portfolio 1';
 	my $email = 'root@root.com';
-	# for each symbol in portfolio 
-	# 	marketval += close;
+
+  # for each symbol in portfolio 
+  #   marketval += close;
+
 	$main_pf_template->param(PF_NAME => $portfolio_name);
 	$main_pf_template->param(VALUE => '');
 	$main_pf_template->param(VOLATILITY => '');
@@ -197,7 +204,8 @@ if ($action eq "portfolio") {
 	for (my $i=0; $i < $holding_info; $i++) {
     $table_data = $table_data."<tr><td>".$holding_info[$i][0]."</td><td>".$holding_info[$i][1]."</td>".
     "<td><a href='portfolio.pl?act=edit_holding&symbol=".$holding_info[$i][0]."&user_email=".$email."&portfolio_name=".$portfolio_name."'>Edit</a></td>".
-    "<td><a href='portfolio.pl?act=view_stats&symbol=symbol&user_email=user_email&portfolio_name=portfolio_name'>View Stats</a></td></tr>";
+    "<td><a href='portfolio.pl?act=view_stats&symbol=".$holding_info[$i][0]."&user_email=".$email."&portfolio_name=".$portfolio_name."'>View Stats</a></td>";
+
   }
   $main_pf_template->param(TABLE_DATA => $table_data);
 
@@ -209,17 +217,42 @@ if ($action eq "edit_holding") {
   my $symbol = param("symbol");
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
-  my $num_shares = PfShares($symbol, $user_email, $portfolio_name);
-  print $num_shares;
+  my @num_shares = PfShares($symbol, $user_email, $portfolio_name);
 
   $edit_holding_template->param(SYMBOL => $symbol);
-  $edit_holding_template->param(NUM_SHARES => $num_shares);
+  $edit_holding_template->param(USER_EMAIL => $user_email);
+  $edit_holding_template->param(PORTFOLIO_NAME => $portfolio_name);
+  $edit_holding_template->param(NUM_SHARES => @num_shares);
   if ($run) {
-    ChangeShares($symbol, $user_email, $portfolio_name);
+    my $num_shares = param("num_shares");
+    if ($num_shares == 0) {
+      DelHolding($user_email, $portfolio_name, $symbol);
+    }
+    else {
+      ChangeShares($num_shares, $user_email, $portfolio_name, $symbol);
+    }
+    $edit_holding_template->param(NUM_SHARES => $num_shares);
   }
   print $edit_holding_template->output;
 }
 
+if ($action eq "view_stats") { 
+  my $view_stats_template = HTML::Template->new(filename => 'view_stats.html');
+  my $symbol = param("symbol");
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+  my $num_shares = PfShares($symbol, $user_email, $portfolio_name);
+  print $num_shares;
+
+  $view_stats_template->param(SYMBOL => $symbol);
+  $view_stats_template->param(NUM_SHARES => $num_shares);
+  if ($run) {
+    ChangeShares($symbol, $user_email, $portfolio_name);
+  }
+  print $view_stats_template->output;
+}
+
+<<<<<<< HEAD
 # if ($action eq "predictions"){
 #     print "<h2>Yesterday's Market Summary</h2>";
 #     my $predictions_generator = 
@@ -299,10 +332,15 @@ if ($action eq "edit_holding") {
     # print $futureimage->png;
 #}
 
+=======
+
+#end the page
+>>>>>>> origin/master
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
 print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
 print "</html>";
+
 
 
 ########################################### HELPER FUNCTIONS ###########################################
@@ -360,12 +398,12 @@ sub PfHoldings {
 } # Selects all holdings associated with a portfolio
 
 sub PfShares {
-  my $rows;
-  eval { $rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? and user_email=? and portfolio_name=?",undef,@_); };
+  my @rows;
+  eval { @rows = ExecSQL($dbuser,$dbpasswd, "select num_shares from holdings where symbol=? and user_email=? and portfolio_name=?","COL",@_); };
   if ($@) { 
     return (undef,$@);
   } else {
-    return $rows;
+    return @rows;
   }
 } # Selects number of shares of a given company in a portfolio. ##NEED TO CHECK THAT PORTFOLIO CONTAINS COMPANY
 
