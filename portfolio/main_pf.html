@@ -1,4 +1,3 @@
-
 <div class="pf-header">
 	<h1>Portfolio: <TMPL_VAR NAME=PORTFOLIO_NAME></h1>
 </div>
@@ -26,5 +25,9 @@
 	<h2>Cash account: $<TMPL_VAR NAME=CASH_ACCOUNT></h2>
 	<a href="portfolio.pl?act=edit_cash&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Edit cash account</a>
 </div>
+
+<a href="portfolio.pl?act=home&user_email=<TMPL_VAR NAME=USER_EMAIL>">Home</a><br>
+<a href="portfolio.pl?act=logout">Logout</a>
+
 
 

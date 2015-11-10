@@ -69,7 +69,7 @@ if ($action eq "login") {
 		if ( ValidUser($user_email, $password )) {
 			$outputsessioncookie = join("/",$user_email,$password);
 			$action = "home";
-			$run = 1;
+			$run = 0;
  		} else { #try again with empty form
 			$badlogin = 1;
 			$action = "login";
@@ -85,7 +85,6 @@ if ($action eq "login") {
 
 if ($action eq "logout") {
   	$deletecookie=1;
-  	$action = "login";
   	undef $user_email;
   	undef $password;
   	$run = 0;
@@ -120,8 +119,6 @@ print "<link rel='stylesheet' href='portfolio.css'>";
 
 
 
-
-
 if ($action eq "login") {
 	#print "welcome to login!";
 	print h2('Login to PJH Portfolio Manager');
@@ -138,6 +135,12 @@ if ($action eq "login") {
     	print "<p>Login failed.  Try again.</p><br>";
   	} 
    	print "<a href=\"portfolio.pl?act=register\">Make an account</a>";
+}
+
+
+if ($action eq "logout") {
+  print "<p>You have logged out.</p><br>";
+  print "<a href=\"portfolio.pl?act=login\">Login</a>";
 }
 
 if ($action eq "register") {
@@ -163,7 +166,7 @@ if ($action eq "register") {
 			print "Error: $error1";
       print "Error: $error2";
 		} else {
-			print "Congrats! new account created.<br>";
+			print "Congrats! New account created.<br>";
       print "<a href=\"portfolio.pl?act=login\">Login</a><br>";
 			$run = 0;
 		}
@@ -178,10 +181,19 @@ if ($action eq "home") {
 
 	print h2("Portfolios");
   foreach my $pf (@portfolios) {
-  		#######does the link in the following print need to be changed/adjusted somehow?#######
-		print "<a href=\"portfolio.pl?act=portfolio&portfolio_name=$pf&user_email=$user_email\">$pf</a><br>";
+		print "<a href=\"portfolio.pl?act=portfolio&portfolio_name=$pf&user_email=$user_email\">$pf</a><br><br>";
 	}
-	#######ADD Portfolio button/link goes here#######
+	my $new_pf_template = HTML::Template->new(filename => 'new_pf.html');
+  $new_pf_template->param(USER_EMAIL => $user_email);
+  if ($run) {
+    my $user_email = param("user_email");
+    my $portfolio_name = param("portfolio_name");
+    my $error = AddPf($user_email, $portfolio_name, 0);
+    $run = 0;
+    print "<a href=\"portfolio.pl?act=portfolio&portfolio_name=$portfolio_name&user_email=$user_email\">$portfolio_name</a><br><br>";
+    print "Congrats! New portfolio created.<br>";
+  }
+  print $new_pf_template->output;
 }
 
 if ($action eq "portfolio") { 
@@ -455,7 +467,7 @@ sub AddPf {
 sub UserPf {
   my @rows;
   eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select portfolios.name from portfolios where user_email= ?", "ROW", 
+              "select portfolios.name from portfolios where user_email= ?", "COL", 
               @_); };
   if ($@) { 
     return (undef,$@);

@@ -1,0 +1,22 @@
+<!-- new portfolio when not editing -->
+<div class="new-pf">
+	<a id="new-pfname" href="#">Add New Portfolio</a>
+</div>
+
+<!-- new portfolio to be edited -->
+<div class="new-pf-edit">
+	<form id="new-pf">
+		<p>New Portfolio Name:
+			<input type="text" name="portfolio_name">
+			<input type="hidden" name="run" value="1">
+			<input type="hidden" name="act" value="home">
+			<input type="hidden" name="user_email" value="<TMPL_VAR NAME=USER_EMAIL>">
+		</p>
+		<button type="submit">Save</button>
+	</form>
+</div>
+
+
+
+
+
