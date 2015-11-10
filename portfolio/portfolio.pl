@@ -59,7 +59,7 @@ if (defined($inputsessioncookie)) {
   	$outputsessioncookie = $inputsessioncookie;
 } else {
 	# $action = "edit_holding";
- #  $action = "login";
+  # $action = "login";
 	undef $outputsessioncookie;
 }
 
@@ -315,126 +315,57 @@ if ($action eq "view_stats") {
   my $symbol = param("symbol");
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
-  my ($open, $high, $low, $close, $volume) = (1, 2, 3, 4, 5); ##need to pull from historical data
+  my ($open, $close, $high, $low, $volume) = CurrentStats($symbol); 
   print "<h4>Open price: $open</h4>";
   print "<h4>Highest price: $high</h4>";
   print "<h4>Lowest price: $low</h4>";
   print "<h4>Close price: $close</h4>";
   print "<h4>Trading Volume: $volume</h4>";
-  print h3('Select a Date Range to View:');
 
   my $dates = [1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992,
                   1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015];
+  my $future_increments = [0.5, 1, 5, 10, 15, 20];
   if(!$run){
-    print startform(-name=>'Dates'),  
+    print startform(-name=>'Dates'),
+    'Select a Past Date Range to View:',
+    br,
     "From: \t", popup_menu(-name=>'Beginning date', -values=> $dates),
     " To: ", popup_menu(-name=>'Ending date', -values=> $dates),
+    br, br,
+    'Select How far into the Future to Predict: ',
     br,
+    popup_menu(-name=>'Future', -values=> $future_increments),
     hidden(-name=>'act',default=>['view_stats']),
             hidden(-name=>'run',default=>['1']),
+            br,
     submit(-value=>'Go'),
     endform;
   }
   else{
-    my $start_date = param('Beginning Date');
-    print "$start_date";
-    my $end_date = param("Ending Date");
-    print "$end_date";
+    my $start_date = param('Beginning date');
+    my $end_date = param('Ending date');
+    my $future = param('Future');
     if($start_date > $end_date){
       print "Error: Please select a valid date range";
       $run = 0;
       $action = "view_stats";
     }
+    else{
+      # convert dates to seconds
+      $start_date = ($start_date - 1970)*60*60*24*365;
+      $end_date = ($end_date - 1970)*60*60*24*365;
+      my $plot = 1;
+      #my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl type=plot symbol=$symbol`;
+      #print $output;
+      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=1147669200 --to=1151643600 --close --plot $symbol`;
+      print $past_graph;
+      my $predictions = `~pdinda/339/HANDOUT/portfolio/time_series_symbol_project.pl $symbol $future`;
+      print $predictions;
+    }
   }
     
-
-
-  # $view_stats_template->param(SYMBOL => $symbol);
-  # $view_stats_template->param(NUM_SHARES => $num_shares);
-  # if ($run) {
-  #   ChangeShares($symbol, $user_email, $portfolio_name);
-  # }
-  # print $view_stats_template->output;
 }
 
-# if ($action eq "predictions"){
-#     print "<h2>Yesterday's Market Summary</h2>";
-#     my $predictions_generator = 
-#     my ($open, $high, $low, $close, $volume); ##need to pull from historical data
-#     my $notime = 0;
-#     my $plot = 1;
-#     my $from; # allow user to select dates, what is the format of timestamp??
-#     my $to;
-#     if (defined $from) { $from=parsedate($from); }
-#     if (defined $to) { $to=parsedate($to); }
-
-
-#     $usage = "usage: get_data.pl [--open] [--high] [--low] [--close] [--vol] [--from=time] [--to=time] [--plot] SYMBOL\n";
-
-#     $#ARGV == 0 or die $usage;
-
-#     $symbol = shift;
-
-#     push @fields, "timestamp" if !$notime;
-#     push @fields, "open" if $open;
-#     push @fields, "high" if $high;
-#     push @fields, "low" if $low;
-#     push @fields, "close" if $close;
-#     push @fields, "volume" if $vol;
-
-
-#     my $sql;
-
-#     $sql = "select " . join(",",@fields) . " from ".GetStockPrefix()."StocksDaily";
-#     $sql.= " where symbol = '$symbol'";
-#     $sql.= " and timestamp >= $from" if $from;
-#     $sql.= " and timestamp <= $to" if $to;
-#     $sql.= " order by timestamp";
-
-#     my $data = ExecStockSQL("TEXT",$sql);
-
-#     if (!$plot) { 
-#       print $data;
-#     } else {
-
-#       open(DATA,">_plot.in") or die "Cannot open temporary file for plotting\n";
-#       print DATA $data;
-#       close(DATA);
-
-#       open(GNUPLOT, "|gnuplot") or die "Cannot open gnuplot for plotting\n";
-#       GNUPLOT->autoflush(1);
-#       print GNUPLOT "set title '$symbol'\nset xlabel 'time'\nset ylabel 'data'\n";
-#       print GNUPLOT "plot '_plot.in' with linespoints;\n";
-#       STDIN->autoflush(1);
-#       <STDIN>;
-#     }
-
-    # my @past_data = [[1, 2, 3, 4, 5], [20, 25, 23, 20, 21]]; ##need query for timestamp and close price from historical data
-    # my $pastgraph = GD::Graph::lines->new(500, 300);
-    # $pastgraph->set(
-    #     x_label     => 'Date',
-    #     y_label     => 'Closing Price',
-    #     title       => 'Past Performance',
-    # ) or warn $pastgraph->error;
-
-    # my $pastimage = $pastgraph->plot(\@data) or die $pastgraph->error;
-
-    # print "Content-type: image/png\n\n";
-    # print $pastimage->png;
-
-    # my @future_data = [[6, 7, 8, 9, 10], [23, 24, 26, 25, 27]];##need to pull from provided script
-    # my $futuregraph = GD::Graph::lines->new(500, 300);
-    # $futuregraph->set(
-    #     x_label     => 'Date',
-    #     y_label     => 'Closing Price',
-    #     title       => 'Past Performance',
-    # ) or warn $futuregraph->error;
-
-    # my $futureimage = $futuregraph->plot(\@data) or die $futuregraph->error;
-
-    # print "Content-type: image/png\n\n";
-    # print $futureimage->png;
-#}
 
 #end the page
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
@@ -489,7 +420,7 @@ sub UserPf {
 sub PfHoldings {
   my @rows;
   eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", undef, 
+              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", "COL", 
               @_); };
   if ($@) { 
     return (undef,$@);
@@ -538,6 +469,18 @@ sub AddHolding {
        "insert into holdings (symbol, user_email, portfolio_name, num_shares) values (?,?,?,?)",undef,@_);};
     return $@;
 } # Adds holdings to a pf
+
+sub CurrentStats {
+  my @rows;
+  eval {@rows = ExecSQL($dbuser,$dbpasswd,
+       "select open, close, high, low, volume from RecentStocksDaily where symbol=? order by timestamp","COL",@_);};
+    if ($@){
+      return (undef, $@);
+    }
+    else{
+      return $rows[0];
+    }
+}
 
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
