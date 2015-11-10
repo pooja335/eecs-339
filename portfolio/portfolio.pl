@@ -44,7 +44,7 @@ if (defined(param("act"))) {
     	$run = 0;
   	}
 } else { # set default action
-	if(defined($inputsessioncookie)) { # if they're logged in send 'em home
+	if(defined($inputsessioncookie)) { # if they're logged in, send 'em home
 		$action="home";
 		$run=0;
 	} else { # otherwise lock 'em out
@@ -160,7 +160,7 @@ if ($action eq "register") {
 			print "Error: $error";
 		} else {
 			print "Congrats! new account created.";
-			$action = "login";
+			$action = "login"; #######NEEDS TO BE CHANGED#######
 			$run = 0;
 		}
 	}
@@ -174,9 +174,10 @@ if ($action eq "home") {
 
 	print h2("Portfolios");
   foreach my $pf (@portfolios) {
+  		#######does the link in the following print need to be changed/adjusted somehow?#######
 		print "<a href=\"portfolio.pl?act=portfolio&portfolio_name=$pf&user_email=$user_email\">$pf</a><br>";
 	}
-	print "<button name=\"newpf\">Add Portfolio</button>";
+	#######ADD Portfolio button/link goes here#######
 }
 
 if ($action eq "portfolio") { 
