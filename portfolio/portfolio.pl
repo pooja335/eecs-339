@@ -19,7 +19,6 @@ use FileHandle;
 
 #use stock_data_access;
 
-
 # receive cookies from client
 my $sessioncookie = "pfsession";
 my $inputsessioncookie = cookie($sessioncookie);
@@ -345,6 +344,48 @@ if ($action eq "edit_cash") {
   print $edit_cash_template->output;
 }
 
+if ($action eq "trading_strategy") { 
+  my $trading_strategy_template = HTML::Template->new(filename => 'trading_strategy.html');
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+  my @holding_info = PfHoldings($user_email, $portfolio_name);
+  my $holding_info = @holding_info;
+
+  my $options = "";
+  for (my $i=0; $i < $holding_info; $i++) {
+    $options = $options."<option value=".$holding_info[$i][0].">".$holding_info[$i][0]."</option>";
+  }
+
+  my $output;
+  if ($run) {
+    my $symbol = param("symbol");
+    my $invested = param("invested");
+    my $trading_cost = param("trading_cost");
+    # print $symbol;
+    # print $invested;
+    # print $trading_cost;
+
+    # run shannon_ratchet.pl on data
+    $output = `~pdinda/339-f15/HANDOUT/portfolio/shannon_ratchet.pl $symbol $invested $trading_cost`;
+    # print $output;
+    # print "<h2>HELLO</h2>";
+    my @output_rows = split /\n/, $output;
+    foreach my $output_row (@output_rows) {
+      my @values = split /\t/, $output_row;
+      $output = $output."<tr><td>".$values[0]."</td><td>".$values[1]."</td></tr>";
+      # print @values;
+      # print "<h2>HI</h2>";
+    }
+  }
+
+  $trading_strategy_template->param(USER_EMAIL => $user_email);
+  $trading_strategy_template->param(PORTFOLIO_NAME => $portfolio_name);
+  $trading_strategy_template->param(OPTIONS => $options);
+  $trading_strategy_template->param(OUTPUT => $output);
+
+  print $trading_strategy_template->output;
+}
+
 
 if ($action eq "view_stats") { 
   print "<h2>Yesterday's Market Summary</h2>";
@@ -621,6 +662,11 @@ BEGIN {
     $ENV{ORACLE_HOME}=$ENV{ORACLE_BASE}."/db_1";
     $ENV{ORACLE_SID}="CS339";
     $ENV{LD_LIBRARY_PATH}=$ENV{ORACLE_HOME}."/lib";
+    $ENV{PORTF_DBMS}="oracle";
+    $ENV{PORTF_DB}="cs339";
+    $ENV{PORTF_DBUSER}="pps860";
+    $ENV{PORTF_DBPASS}="zaM7in9Wf";
+    $ENV{PATH} = $ENV{PATH}.":."; 
     $ENV{BEGIN_BLOCK} = 1;
     exec 'env',cwd().'/'.$0,@ARGV;
   }

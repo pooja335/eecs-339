@@ -1,0 +1,26 @@
+<h1>Shannon Ratchet Trading Strategy</h1>
+<form>
+	<h4>
+		<p>Company symbol:</p>
+		<select name="symbol">
+			<TMPL_VAR NAME=OPTIONS>	
+		</select>
+		<p>Cash to be invested:</p>
+		<input type="text" name="invested">
+		<p>Trading cost:</p>
+		<input type="text" name="trading_cost">
+		<input type="hidden" name="run" value="1">
+		<input type="hidden" name="act" value="trading_strategy">
+		<input type="hidden" name="user_email" value="<TMPL_VAR NAME=USER_EMAIL>">
+		<input type="hidden" name="portfolio_name" value="<TMPL_VAR NAME=PORTFOLIO_NAME>">
+	</h4>
+	<button type="submit">Submit</button>
+</form>
+
+<div class="shannon-ratchet-output">
+	<table>
+		<TMPL_VAR NAME=OUTPUT>
+	</table>	
+</div>
+
+<a href="portfolio.pl?act=portfolio&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Go Back</a>
