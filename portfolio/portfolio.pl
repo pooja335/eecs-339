@@ -351,7 +351,13 @@ if ($action eq "view_stats") {
   my $symbol = param("symbol");
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
-  my ($open, $close, $high, $low, $volume) = CurrentStats($symbol); 
+  my @stats = CurrentStats($symbol); 
+  my $stats = @stats;
+  my $open = $stats[0][0];
+  my $high = $stats[0][1];
+  my $low = $stats[0][2];
+  my $close = $stats[0][3];
+  my $volume = $stats[0][4];
   print "<h4>Open price: $open</h4>";
   print "<h4>Highest price: $high</h4>";
   print "<h4>Lowest price: $low</h4>";
@@ -373,11 +379,13 @@ if ($action eq "view_stats") {
     popup_menu(-name=>'Future', -values=> $future_increments),
     hidden(-name=>'act',default=>['view_stats']),
             hidden(-name=>'run',default=>['1']),
+            hidden(-name=>'symbol',default=>$symbol),
             br,
     submit(-value=>'Go'),
     endform;
   }
   else{
+    $symbol = param('symbol');
     my $start_date = param('Beginning date');
     my $end_date = param('Ending date');
     my $future = param('Future');
@@ -387,13 +395,13 @@ if ($action eq "view_stats") {
       $action = "view_stats";
     }
     else{
+      $symbol = param('symbol');
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
-      my $plot = 1;
-      #my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl type=plot symbol=$symbol`;
-      #print $output;
-      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=$start_date --to=$end_date --close --plot $symbol\n`;
+      my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl 'type'="plot" symbol='$symbol'`;
+      print $output;
+      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=$start_date --to=$end_date --close $symbol > _data.in`;
       print $past_graph;
       my $predictions = `~pdinda/339/HANDOUT/portfolio/time_series_symbol_project.pl $symbol $future`;
       print $predictions;
@@ -509,12 +517,12 @@ sub AddHolding {
 sub CurrentStats {
   my @rows;
   eval {@rows = ExecSQL($dbuser,$dbpasswd,
-       "select open, close, high, low, volume from RecentStocksDaily where symbol=? order by timestamp","COL",@_);};
+       "select open, high, low, close, volume, timestamp from RecentStocksDaily where symbol=? order by timestamp DESC",undef,@_);};
     if ($@){
       return (undef, $@);
     }
     else{
-      return $rows[0];
+      return @rows;
     }
 }
 
