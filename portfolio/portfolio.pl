@@ -345,8 +345,8 @@ if ($action eq "view_stats") {
     my $start_date = param('Beginning date');
     my $end_date = param('Ending date');
     my $future = param('Future');
-    if($start_date > $end_date){
-      print "Error: Please select a valid date range";
+    if($start_date >= $end_date){
+      print "Error: The start date cannot be on or after the end date";
       $run = 0;
       $action = "view_stats";
     }
@@ -357,7 +357,7 @@ if ($action eq "view_stats") {
       my $plot = 1;
       #my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl type=plot symbol=$symbol`;
       #print $output;
-      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=1147669200 --to=1151643600 --close --plot $symbol`;
+      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=$start_date --to=$end_date --close --plot $symbol\n`;
       print $past_graph;
       my $predictions = `~pdinda/339/HANDOUT/portfolio/time_series_symbol_project.pl $symbol $future`;
       print $predictions;
