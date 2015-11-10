@@ -237,6 +237,8 @@ if ($action eq "edit_holding") {
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
   my @num_shares = PfShares($symbol, $user_email, $portfolio_name);
+  my @cash = PfCash($user_email, $portfolio_name);
+  my $cash = $cash[0];
 
   $edit_holding_template->param(SYMBOL => $symbol);
   $edit_holding_template->param(USER_EMAIL => $user_email);
@@ -244,14 +246,20 @@ if ($action eq "edit_holding") {
   $edit_holding_template->param(NUM_SHARES => @num_shares);
   if ($run) {
     print "Stock successfully updated.";
-    my $num_shares = param("num_shares");
-    if ($num_shares == 0) {
+    my $new_num_shares = param("num_shares");
+    my $num_share_diff = $new_num_shares - $num_shares[0];
+    my $output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
+    if ($output =~ /close\t([0-9\.]+)/) {
+      $cash -= $1 * $num_share_diff;
+    }
+    ChangeCash($cash, $user_email, $portfolio_name);
+    if ($new_num_shares == 0) {
       DelHolding($user_email, $portfolio_name, $symbol);
     }
     else {
-      ChangeShares($num_shares, $user_email, $portfolio_name, $symbol);
+      ChangeShares($new_num_shares, $user_email, $portfolio_name, $symbol);
     }
-    $edit_holding_template->param(NUM_SHARES => $num_shares);
+    $edit_holding_template->param(NUM_SHARES => $new_num_shares);
   }
   print $edit_holding_template->output;
 }
@@ -260,6 +268,8 @@ if ($action eq "add_holding") {
   my $add_holding_template = HTML::Template->new(filename => 'add_holding.html');
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
+  my @cash = PfCash($user_email, $portfolio_name);
+  my $cash = $cash[0];
 
   $add_holding_template->param(USER_EMAIL => $user_email);
   $add_holding_template->param(PORTFOLIO_NAME => $portfolio_name);
@@ -270,8 +280,13 @@ if ($action eq "add_holding") {
     my $num_shares = param("num_shares");
     if ($num_shares != 0) {
       AddHolding($symbol, $user_email, $portfolio_name, $num_shares);
+
+      my $output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
+      if ($output =~ /close\t([0-9\.]+)/) {
+        $cash -= $1 * $num_shares;
+      }
+      ChangeCash($cash, $user_email, $portfolio_name);
     }
-    # $add_holding_template->param(NUM_SHARES => $num_shares);
   }
   print $add_holding_template->output;
 }
@@ -287,13 +302,8 @@ if ($action eq "edit_cash") {
   $edit_cash_template->param(CASH_ACCOUNT => @cash);
   if ($run) {
     my $cash = param("cash");
-    if ($cash >= 0) {
-      print "Cash account successfully updated.";
-      ChangeCash($cash, $user_email, $portfolio_name);
-    }
-    else {
-      print "You can not have a negative value";
-    }
+    print "Cash account successfully updated.";
+    ChangeCash($cash, $user_email, $portfolio_name);
     $edit_cash_template->param(CASH_ACCOUNT => $cash);
   }
   print $edit_cash_template->output;
@@ -527,7 +537,7 @@ sub AddHolding {
   eval { ExecSQL($dbuser,$dbpasswd,
        "insert into holdings (symbol, user_email, portfolio_name, num_shares) values (?,?,?,?)",undef,@_);};
     return $@;
-} # Adds pf for a user ##NEED TO CHECK THAT USER EXISTS, probably in function that calls this function
+} # Adds holdings to a pf
 
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################
