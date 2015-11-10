@@ -281,11 +281,20 @@ if ($action eq "add_holding") {
     if ($num_shares != 0) {
       AddHolding($symbol, $user_email, $portfolio_name, $num_shares);
 
-      my $output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
-      if ($output =~ /close\t([0-9\.]+)/) {
+      # update the cash in their account
+      my $quote_output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
+      if ($quote_output =~ /close\t([0-9\.]+)/) {
         $cash -= $1 * $num_shares;
       }
       ChangeCash($cash, $user_email, $portfolio_name);
+
+      # add to the recent stocks daily table
+      my $quotehist_output = `~pdinda/339-f15/HANDOUT/portfolio/quotehist.pl --from=\"01/01/2006\" --open --high --low --close --vol $symbol`;
+      my @timestamp_quotes = split /\n/, $quotehist_output;
+      foreach my $timestamp_quote (@timestamp_quotes) {
+        my @values = split /\t/, $timestamp_quote;
+        AddRecentStocksDaily($symbol, $values[0], $values[2], $values[3], $values[4], $values[5], $values[6]);
+      }
     }
   }
   print $add_holding_template->output;
@@ -420,7 +429,7 @@ sub UserPf {
 sub PfHoldings {
   my @rows;
   eval { @rows = ExecSQL($dbuser, $dbpasswd, 
-              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", "COL", 
+              "select symbol, num_shares from holdings where user_email=? and portfolio_name=?", undef, 
               @_); };
   if ($@) { 
     return (undef,$@);
@@ -481,6 +490,13 @@ sub CurrentStats {
       return $rows[0];
     }
 }
+
+sub AddRecentStocksDaily {
+  eval { ExecSQL($dbuser,$dbpasswd,
+       "insert into RecentStocksDaily (symbol, timestamp, open, high, low, close, volume) values (?,?,?,?,?,?,?)",undef,@_);};
+    return $@;
+} # Adds to recent stocks daily table
+
 
 
 ########################################### HELPER-HELPER FUNCTIONS (from Prof Dinda) ###########################################

@@ -53,17 +53,17 @@ create table holdings (
 
 create table RecentStocksDaily (
 	--
-	symbol varchar2(16) NOT NULL unique,
+	symbol varchar2(16) NOT NULL,
 	--
-	timestamp number NOT NULL unique, 	
+	timestamp number NOT NULL, 	
 	--
 	open number NOT NULL,
-	--
-	close number NOT NULL,
 	--
 	high number NOT NULL,
 	--
 	low number NOT NULL,
+	--
+	close number NOT NULL,
 	--
 	volume number NOT NULL,
 	--
