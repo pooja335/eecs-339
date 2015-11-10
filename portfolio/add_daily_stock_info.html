@@ -1,0 +1,24 @@
+<h1>Add Daily Stock Information</h1>
+<form>
+	<h4>
+		<h4>Add today's information for <TMPL_VAR NAME=SYMBOL></h4>
+		<h5>You must fill out all fields</h5>
+		<p>open</p>
+		<input type="text" name="open">
+		<p>high</p>
+		<input type="text" name="high">
+		<p>low</p>
+		<input type="text" name="low">
+		<p>close</p>
+		<input type="text" name="close">
+		<p>volume</p>
+		<input type="text" name="volume">
+		<input type="hidden" name="run" value="1">
+		<input type="hidden" name="act" value="add_daily_stock_info">
+		<input type="hidden" name="symbol" value="<TMPL_VAR NAME=SYMBOL>">
+		<input type="hidden" name="user_email" value="<TMPL_VAR NAME=USER_EMAIL>">
+		<input type="hidden" name="portfolio_name" value="<TMPL_VAR NAME=PORTFOLIO_NAME>">
+	</h4>
+	<button type="submit">Save</button>
+</form>
+<a href="portfolio.pl?act=portfolio&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Go Back</a>

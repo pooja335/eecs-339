@@ -210,7 +210,8 @@ if ($action eq "portfolio") {
 	for (my $i=0; $i < $holding_info; $i++) {
     $table_data = $table_data."<tr><td>".$holding_info[$i][0]."</td><td>".$holding_info[$i][1]."</td>".
     "<td><a href='portfolio.pl?act=edit_holding&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>Edit</a></td>".
-    "<td><a href='portfolio.pl?act=view_stats&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>View Stats</a></td>";
+    "<td><a href='portfolio.pl?act=view_stats&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>View Stats</a></td>".
+    "<td><a href='portfolio.pl?act=add_daily_stock_info&symbol=".$holding_info[$i][0]."&user_email=".$user_email."&portfolio_name=".$portfolio_name."'>Add Daily Stock Info</a></td>";
 
     my $output = `~pdinda/339/HANDOUT/portfolio/quote.pl $holding_info[$i][0]`;
     if ($output =~ /close\t([0-9\.]+)/) {
@@ -298,6 +299,32 @@ if ($action eq "add_holding") {
     }
   }
   print $add_holding_template->output;
+}
+
+if ($action eq "add_daily_stock_info") { 
+  my $add_daily_stock_info_template = HTML::Template->new(filename => 'add_daily_stock_info.html');
+  my $symbol = param("symbol");
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+
+  $add_daily_stock_info_template->param(SYMBOL => $symbol);
+  $add_daily_stock_info_template->param(USER_EMAIL => $user_email);
+  $add_daily_stock_info_template->param(PORTFOLIO_NAME => $portfolio_name);
+
+  if ($run) {
+    my $open = param("open");
+    my $high = param("high");
+    my $low = param("low");
+    my $close = param("close");
+    my $volume = param("volume");
+    my $error = AddRecentStocksDaily($symbol, time(), $open, $high, $low, $close, $volume);
+    if ($error) {
+      print "Error: $error";
+    } else {
+      print "Information updated";
+    }
+  }
+  print $add_daily_stock_info_template->output;
 }
 
 if ($action eq "edit_cash") { 
