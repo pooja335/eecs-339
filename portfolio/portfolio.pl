@@ -59,7 +59,7 @@ if (defined($inputsessioncookie)) {
   	$outputsessioncookie = $inputsessioncookie;
 } else {
 	$action = "edit_holding";
-	$action = "login";
+  $action = "login";
 	undef $outputsessioncookie;
 }
 
@@ -187,7 +187,7 @@ if ($action eq "portfolio") {
 	my $user_email = param("user_email");
 
   my @holding_info = PfHoldings($user_email, $portfolio_name);
-  my $holding_info = @holding_info; 
+  my $holding_info = @holding_info;
 
   my $table_data = "";
   my $marketval = 0;
@@ -283,20 +283,52 @@ if ($action eq "edit_cash") {
   print $edit_cash_template->output;
 }
 
+
 if ($action eq "view_stats") { 
-  my $view_stats_template = HTML::Template->new(filename => 'view_stats.html');
+  print "<h2>Yesterday's Market Summary</h2>";
   my $symbol = param("symbol");
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
-  my $num_shares = PfShares($symbol, $user_email, $portfolio_name);
-  print $num_shares;
+  my ($open, $high, $low, $close, $volume) = (1, 2, 3, 4, 5); ##need to pull from historical data
+  print "<h4>Open price: $open</h4>";
+  print "<h4>Highest price: $high</h4>";
+  print "<h4>Lowest price: $low</h4>";
+  print "<h4>Close price: $close</h4>";
+  print "<h4>Trading Volume: $volume</h4>";
+  print h3('Select a Date Range to View:');
 
-  $view_stats_template->param(SYMBOL => $symbol);
-  $view_stats_template->param(NUM_SHARES => $num_shares);
-  if ($run) {
-    ChangeShares($symbol, $user_email, $portfolio_name);
+  my $dates = [1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992,
+                  1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015];
+  if(!$run){
+    print startform(-name=>'Dates'),  
+    "From: \t", popup_menu(-name=>'Beginning date', -values=> $dates),
+    " To: ", popup_menu(-name=>'Ending date', -values=> $dates),
+    br,
+    hidden(-name=>'act',default=>['view_stats']),
+            hidden(-name=>'run',default=>['1']),
+    submit(-value=>'Go'),
+    endform;
   }
-  print $view_stats_template->output;
+  else{
+    my $start_date = param('Beginning Date');
+    print "$start_date";
+    my $end_date = param("Ending Date");
+    print "$end_date";
+    if($start_date > $end_date){
+      print "Error: Please select a valid date range";
+      $run = 0;
+      $action = "view_stats";
+    }
+  }
+    
+
+
+  # $view_stats_template->param(SYMBOL => $symbol);
+  # $view_stats_template->param(NUM_SHARES => $num_shares);
+  # if ($run) {
+  #   ChangeShares($symbol, $user_email, $portfolio_name);
+  # }
+  # print $view_stats_template->output;
 }
 
 # if ($action eq "predictions"){
