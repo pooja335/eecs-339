@@ -6,6 +6,7 @@ delete from RecentStocksDaily;
 
 commit;
 
+drop view HistoricalData;
 drop table RecentStocksDaily;
 -- drop table holdingHistory;
 drop table holdings;
@@ -92,7 +93,7 @@ create table RecentStocksDaily (
 
 
 
--- CREATE VIEW HistoricalData AS SELECT * FROM cs339.StocksDaily UNION SELECT * FROM RecentStocksDaily;
+CREATE VIEW HistoricalData AS ((SELECT * FROM cs339.StocksDaily) UNION (SELECT * FROM RecentStocksDaily));
 
 
 
@@ -101,6 +102,5 @@ create table RecentStocksDaily (
 --Make dummy data
 INSERT INTO pfusers (name, email, password) VALUES ('root', 'root@root.com', 'rootroot');
 INSERT INTO portfolios (user_email, name, cash_account) VALUES ('root@root.com', 'portfolio 1', 100.00);
-INSERT INTO holdings (symbol, user_email, portfolio_name, num_shares) VALUES ('APPL', 'root@root.com', 'portfolio 1', 1);
 --INSERT INTO holdingHistory (holding_symbol, histdata_symbol, timstamp, user_email, pf_name) VALUES ('APPL', 'APPL', '00:00:00', 'root@root.com', 'portfolio 1');
 --CREATE VIEW histData as recent_data UNION ALL historicalData;

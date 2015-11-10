@@ -58,8 +58,8 @@ if (defined($inputsessioncookie)) {
 	($user_email,$password) = split(/\//,$inputsessioncookie);
   	$outputsessioncookie = $inputsessioncookie;
 } else {
-	$action = "edit_holding";
-  $action = "login";
+	# $action = "edit_holding";
+ #  $action = "login";
 	undef $outputsessioncookie;
 }
 
@@ -137,7 +137,7 @@ if ($action eq "login") {
   	if ($badlogin) { 
     	print "<p>Login failed.  Try again.</p><br>";
   	} 
-   	print "<p>No account? <button id=\"register\">Register</button></p>";
+   	print "<a href=\"portfolio.pl?act=register\">Make an account</a>";
 }
 
 if ($action eq "register") {
@@ -147,6 +147,7 @@ if ($action eq "register") {
 					"Name:", textfield(-name=>'name'), p,
 					"Email:", textfield(-name=>'user_email'), p,
 	  				"Password:", password_field(-name=>'password'), p,
+            "Portfolio Name:",textfield(-name=>'portfolio_name'),p,
 	    			hidden(-name=>'act',default=>['register']),
 	      			hidden(-name=>'run',default=>['1']),
 					submit(name=>"Create Account"),
@@ -155,12 +156,15 @@ if ($action eq "register") {
 		my $name = param('name');
 		my $user_email = param('user_email');
 		my $password = param('password');
-		my $error = UserAdd($name, $password, $user_email);
-		if ($error) {
-			print "Error: $error";
+    my $portfolio_name = param('portfolio_name');
+		my $error1 = UserAdd($name, $user_email, $password);
+    my $error2 = AddPf($user_email, $portfolio_name, 0);
+		if ($error1 or $error2) {
+			print "Error: $error1";
+      print "Error: $error2";
 		} else {
-			print "Congrats! new account created.";
-			$action = "login"; #######NEEDS TO BE CHANGED#######
+			print "Congrats! new account created.<br>";
+      print "<a href=\"portfolio.pl?act=login\">Login</a><br>";
 			$run = 0;
 		}
 	}
