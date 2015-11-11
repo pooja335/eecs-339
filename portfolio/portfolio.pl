@@ -8,7 +8,6 @@ my @sqlinput=();
 my @sqloutput=();
 my $debug;
 
-#use Time::ParseDate;
 use CGI qw(:standard);
 use HTML::Template;
 use Data::Dumper;
@@ -22,7 +21,6 @@ use FileHandle;
 # receive cookies from client
 my $sessioncookie = "pfsession";
 my $inputsessioncookie = cookie($sessioncookie);
-
 
 my $outputsessioncookie = undef;
 my $deletecookie=0;
@@ -116,7 +114,7 @@ print "</head>";
 print "<body>";
 print "<link rel='stylesheet' href='portfolio.css'>";
 
-
+#Add documentation for grading
 if ($action eq "viewerd") {
 	print h2("ER DIAGRAM");
 	print "<img src=\"documentation/erd.png\">";
@@ -132,11 +130,12 @@ if($action eq "viewrd") {
 if($action eq "viewddl") {
 	print h2("SQL DDL");
 	print "<img src=\"documentation/ddl1.png\"><br>";
-	print "<img src=\"documentation/ddl2.png\"><br>";
-	print "<img src=\"documentation/ddl3.png\">";
+	print "<img src=\"documentation/ddl2.png\">";
 }
 if($action eq "viewdmldql") {
-	print h2("REST OF SQL");
+	print h2("DML and DQL");
+	print "<img src=\"documentation/dmldql1.png\"><br>";
+	print "<img src=\"documentation/dmldql2.png\">";
 
 }
 
@@ -517,12 +516,16 @@ if ($action eq "view_stats") {
           hidden(-name=>'portfolio_name',default=>$portfolio_name),
           hidden(-name=>'run',default=>['1']),
           hidden(-name=>'symbol',default=>$symbol),
+          hidden(-name=>'user_email',default=>$user_email),
+          hidden(-name=>'portfolio_name',default=>$portfolio_name),
           br,br,
   submit(-value=>'Go'),
   endform;
   
   if ($run) {
     $symbol = param('symbol');
+    $user_email = param('user_email');
+    $portfolio_name = param('portfolio_name');
     my $start_date = param('beginning_date');
     my $end_date = param('ending_date');
     my $future = param('future');
