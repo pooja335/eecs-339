@@ -118,13 +118,16 @@ print "<link rel='stylesheet' href='portfolio.css'>";
 
 
 if ($action eq "viewerd") {
-	print "SEE THE ER DIAGRAM";
+	print h2("ER DIAGRAM");
+	print "<img src=\"erd.png\" height=\"960\" width=\"720\">";
 }
 if ($action eq "viewsb") {
 	print "SEE THE STORYBOARD";
 }
 if($action eq "viewrd") {
-	print "relational design";
+	print h2("Relational Design");
+	print p, "pfusers(email, name, password)
+				email → name, password";
 }
 if($action eq "viewddl") {
 	print "SQL DDL";
