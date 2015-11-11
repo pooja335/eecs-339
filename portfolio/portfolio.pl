@@ -132,8 +132,7 @@ if($action eq "viewrd") {
 if($action eq "viewddl") {
 	print h2("SQL DDL");
 	print "<img src=\"documentation/ddl1.png\"><br>";
-	print "<img src=\"documentation/ddl2.png\"><br>";
-	print "<img src=\"documentation/ddl3.png\">";
+	print "<img src=\"documentation/ddl2.png\">";
 }
 if($action eq "viewdmldql") {
 	print h2("REST OF SQL");
