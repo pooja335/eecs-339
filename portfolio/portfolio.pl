@@ -297,25 +297,31 @@ if ($action eq "add_holding") {
   $add_holding_template->param(PORTFOLIO_NAME => $portfolio_name);
 
   if ($run) {
-    print "Stock successfully added. Add another?";
     my $symbol = param("symbol");
     my $num_shares = param("num_shares");
     if ($num_shares != 0) {
-      AddHolding($symbol, $user_email, $portfolio_name, $num_shares);
-
-      # update the cash in their account
-      my $quote_output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
-      if ($quote_output =~ /close\t([0-9\.]+)/) {
-        $cash -= $1 * $num_shares;
+      my $error = AddHolding($symbol, $user_email, $portfolio_name, $num_shares);
+      if ($error) {
+        print $error;
+        $run = 0;
+        $action = "add_holding";
       }
-      ChangeCash($cash, $user_email, $portfolio_name);
+      else {
+        print "Stock successfully added. Add another?";
+        # update the cash in their account
+        my $quote_output = `~pdinda/339/HANDOUT/portfolio/quote.pl $symbol`;
+        if ($quote_output =~ /close\t([0-9\.]+)/) {
+          $cash -= $1 * $num_shares;
+        }
+        ChangeCash($cash, $user_email, $portfolio_name);
 
-      # add to the recent stocks daily table
-      my $quotehist_output = `~pdinda/339-f15/HANDOUT/portfolio/quotehist.pl --from=\"01/01/2006\" --open --high --low --close --vol $symbol`;
-      my @timestamp_quotes = split /\n/, $quotehist_output;
-      foreach my $timestamp_quote (@timestamp_quotes) {
-        my @values = split /\t/, $timestamp_quote;
-        AddRecentStocksDaily($symbol, $values[0], $values[2], $values[3], $values[4], $values[5], $values[6]);
+        # add to the recent stocks daily table
+        my $quotehist_output = `~pdinda/339-f15/HANDOUT/portfolio/quotehist.pl --from=\"01/01/2006\" --open --high --low --close --vol $symbol`;
+        my @timestamp_quotes = split /\n/, $quotehist_output;
+        foreach my $timestamp_quote (@timestamp_quotes) {
+          my @values = split /\t/, $timestamp_quote;
+          AddRecentStocksDaily($symbol, $values[0], $values[2], $values[3], $values[4], $values[5], $values[6]);
+        }
       }
     }
   }
