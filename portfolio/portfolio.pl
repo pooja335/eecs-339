@@ -366,13 +366,11 @@ if ($action eq "covariance_matrix") {
   if ($run) {
     my $start_date = param('beginning_date');
     my $end_date = param('ending_date');
-    print "<p>hello</p>";
-    print $user_email;
-    print $portfolio_name;
-    my @holding_info = PfHoldings($user_email, $portfolio_name);
-    print @holding_info;
-
-    # get_covar.pl --field1=close --field2=close --from="1/1/99" --to="12/31/00" AAPL IBM G
+    my @holding_info = PfHoldingSymbols($user_email, $portfolio_name);
+    my $symbols = "";
+    foreach my $h (@holding_info) {
+      $symbols = $symbols." ".$h;
+    }
 
     if ($start_date == "" or $end_date == "") {
       print "Please select a start and end date<br>";
@@ -388,6 +386,27 @@ if ($action eq "covariance_matrix") {
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
+
+      my @covar_matrix = `./get_covar.pl --field1=close --field2=close --from=\"$start_date\" --to=\"$end_date\" $symbols`;
+      print $covar_matrix[0]."<br>";
+      print $covar_matrix[1]."<br>";
+      print $covar_matrix[2]."<br>";
+      print $covar_matrix[3]."<br>";
+      shift(@covar_matrix);
+      shift(@covar_matrix);
+      shift(@covar_matrix);
+      shift(@covar_matrix);
+
+      print "<table>";
+      foreach my $covar_row (@covar_matrix) {
+        my @values = split /\t/, $covar_row;
+        print "<tr>";
+        foreach my $v (@values) {
+          print "<td>".$v."</td>";
+        }
+        print "</tr>";
+      }
+      print "</table><br>";
     }
     
   }
@@ -608,6 +627,18 @@ sub PfHoldings {
     return @rows;
   }
 } # Selects all holdings associated with a portfolio
+
+sub PfHoldingSymbols {
+  my @rows;
+  eval { @rows = ExecSQL($dbuser, $dbpasswd, 
+              "select symbol from holdings where user_email=? and portfolio_name=?", "COL", 
+              @_); };
+  if ($@) { 
+    return (undef,$@);
+  } else {
+    return @rows;
+  }
+} # Selects all holding symbols associated with a portfolio
 
 sub PfShares {
   my @rows;
