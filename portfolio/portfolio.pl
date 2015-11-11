@@ -369,6 +369,8 @@ if ($action eq "trading_strategy") {
       my @values = split /\t/, $output_row;
       $output = $output."<tr><td>".$values[0]."</td><td>".$values[1]."</td></tr>";
     }
+    my $results_header = "Information for $symbol:";
+    $trading_strategy_template->param(RESULTS_HEADER => $results_header);
   }
 
   $trading_strategy_template->param(USER_EMAIL => $user_email);

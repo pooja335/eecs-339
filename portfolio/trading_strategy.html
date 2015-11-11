@@ -3,6 +3,7 @@
 	<h4>
 		<p>Company symbol:</p>
 		<select name="symbol">
+			<option value=""></option>
 			<TMPL_VAR NAME=OPTIONS>	
 		</select>
 		<p>Cash to be invested:</p>
@@ -18,6 +19,7 @@
 </form>
 
 <div class="shannon-ratchet-output">
+	<h3><TMPL_VAR NAME=RESULTS_HEADER></h3>
 	<table>
 		<TMPL_VAR NAME=OUTPUT>
 	</table>	
