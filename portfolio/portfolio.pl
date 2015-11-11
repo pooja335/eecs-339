@@ -356,25 +356,18 @@ if ($action eq "trading_strategy") {
     $options = $options."<option value=".$holding_info[$i][0].">".$holding_info[$i][0]."</option>";
   }
 
-  my $output;
+  my $output = "";
   if ($run) {
     my $symbol = param("symbol");
     my $invested = param("invested");
     my $trading_cost = param("trading_cost");
-    # print $symbol;
-    # print $invested;
-    # print $trading_cost;
 
     # run shannon_ratchet.pl on data
-    $output = `~pdinda/339-f15/HANDOUT/portfolio/shannon_ratchet.pl $symbol $invested $trading_cost`;
-    # print $output;
-    # print "<h2>HELLO</h2>";
-    my @output_rows = split /\n/, $output;
+    my $sr_output = `shannon_ratchet.pl $symbol $invested $trading_cost`;
+    my @output_rows = split /\n/, $sr_output;
     foreach my $output_row (@output_rows) {
       my @values = split /\t/, $output_row;
       $output = $output."<tr><td>".$values[0]."</td><td>".$values[1]."</td></tr>";
-      # print @values;
-      # print "<h2>HI</h2>";
     }
   }
 
@@ -412,8 +405,8 @@ if ($action eq "view_stats") {
     print startform(-name=>'Dates'),
     'Select a Past Date Range to View:',
     br,
-    "From: \t", popup_menu(-name=>'Beginning date', -values=> $dates),
-    " To: ", popup_menu(-name=>'Ending date', -values=> $dates),
+    "From: \t", popup_menu(-name=>'beginning_date', -values=> $dates),
+    " To: ", popup_menu(-name=>'ending_date', -values=> $dates),
     br, br,
     'Select How far into the Future to Predict: ',
     br,
@@ -427,8 +420,8 @@ if ($action eq "view_stats") {
   }
   else{
     $symbol = param('symbol');
-    my $start_date = param('Beginning date');
-    my $end_date = param('Ending date');
+    my $start_date = param('beginning_date');
+    my $end_date = param('ending_date');
     my $future = param('Future');
     if($start_date >= $end_date){
       print "Error: The start date cannot be on or after the end date";
@@ -440,11 +433,11 @@ if ($action eq "view_stats") {
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
-      my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl 'type'="plot" symbol='$symbol'`;
+      my $output = `plot_stock.pl 'type'="plot" symbol='$symbol'`;
       print $output;
-      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=$start_date --to=$end_date --close $symbol > _data.in`;
+      my $past_graph = `get_data.pl  --from=$start_date --to=$end_date --close $symbol > _data.in`;
       print $past_graph;
-      my $predictions = `~pdinda/339/HANDOUT/portfolio/time_series_symbol_project.pl $symbol $future`;
+      my $predictions = `time_series_symbol_project.pl $symbol $future`;
       print $predictions;
     }
   }
