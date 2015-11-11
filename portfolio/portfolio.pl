@@ -440,12 +440,26 @@ if ($action eq "view_stats") {
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
-      my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl 'type'="plot" symbol='$symbol'`;
-      print $output;
-      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl  --from=$start_date --to=$end_date --close $symbol > _data.in`;
-      print $past_graph;
+      # my $output = `~pdinda/339/HANDOUT/portfolio/plot_stock.pl --type=plot --symbol=$symbol`;
+      # print $output;
+      my $past_graph = `~pdinda/339/HANDOUT/portfolio/get_data.pl --from=$start_date --to=$end_date --close --plot $symbol`;
+      #print $past_graph;
       my $predictions = `~pdinda/339/HANDOUT/portfolio/time_series_symbol_project.pl $symbol $future`;
-      print $predictions;
+      # print $predictions;
+      my @stockinfo = GetInfo($symbol, $start_date, $end_date);
+      my $std = $stockinfo[0][2];
+      my $mean = $stockinfo[0][1];
+      my @totinfo = GetAllInfo($symbol, $end_date);
+      my $totstd = $totinfo[0][2];
+      my $totmean = $totinfo[0][1];
+      my $stockcovar = $std/$mean;
+      my $totcovar = $stockcovar*$std/$totstd;
+      print $symbol, br;
+      print $stockinfo[0][0], br;
+      print $totinfo[0][0], br;
+      print "<h4>Covariance: $stockcovar</h4>";
+      print "<h4>Beta: $totcovar</h4>";
+      
     }
   }
     
@@ -572,6 +586,30 @@ sub AddRecentStocksDaily {
        "insert into RecentStocksDaily (symbol, timestamp, open, high, low, close, volume) values (?,?,?,?,?,?,?)",undef,@_);};
     return $@;
 } # Adds to recent stocks daily table
+
+sub GetInfo {
+  my @rows;
+  eval {@rows = ExecSQL($dbuser,$dbpasswd,
+       "select count(close), avg(close), stddev(close), min(close), max(close) from HistoricalData where symbol=? and timestamp>=? and timestamp<=?",undef,@_);};
+    if ($@){
+      return (undef, $@);
+    }
+    else{
+      return @rows;
+    }
+} # returns statistics for a stock over a given period
+
+sub GetAllInfo {
+  my @rows;
+  eval {@rows = ExecSQL($dbuser,$dbpasswd,
+       "select count(close), avg(close), stddev(close), min(close), max(close) from HistoricalData where timestamp>=? and timestamp<=?",undef,@_);};
+    if ($@){
+      return (undef, $@);
+    }
+    else{
+      return @rows;
+    }
+} # returns statistics for a stock for all time
 
 
 
