@@ -383,8 +383,8 @@ if ($action eq "trading_strategy") {
 
 
 if ($action eq "view_stats") { 
-  print "<h2>Yesterday's Market Summary</h2>";
   my $symbol = param("symbol");
+  print "<h2>Yesterday's Market Summary for $symbol</h2>";
   my $user_email = param("user_email");
   my $portfolio_name = param("portfolio_name");
   my @stats = CurrentStats($symbol); 
@@ -400,49 +400,75 @@ if ($action eq "view_stats") {
   print "<h4>Close price: $close</h4>";
   print "<h4>Trading Volume: $volume</h4>";
 
-  my $dates = [1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992,
+  my $dates = ["",1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992,
                   1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015];
-  my $future_increments = [0.5, 1, 5, 10, 15, 20];
-  if(!$run){
-    print startform(-name=>'Dates'),
-    'Select a Past Date Range to View:',
-    br,
-    "From: \t", popup_menu(-name=>'beginning_date', -values=> $dates),
-    " To: ", popup_menu(-name=>'ending_date', -values=> $dates),
-    br, br,
-    'Select How far into the Future to Predict: ',
-    br,
-    popup_menu(-name=>'Future', -values=> $future_increments),
-    hidden(-name=>'act',default=>['view_stats']),
-            hidden(-name=>'run',default=>['1']),
-            hidden(-name=>'symbol',default=>$symbol),
-            br,
-    submit(-value=>'Go'),
-    endform;
-  }
-  else{
+  my $future_increments = ["",1,2,3,4,5,6,7,8,9,10,15,20];
+  print startform(-name=>'Dates'),
+  'Select a past date range:',
+  br,
+  "From: \t", popup_menu(-name=>'beginning_date', -values=> $dates),
+  " To: ", popup_menu(-name=>'ending_date', -values=> $dates),
+  br, br,
+  'Select how many days into the future to predict: ',
+  br,
+  popup_menu(-name=>'Future', -values=> $future_increments),
+  hidden(-name=>'act',default=>['view_stats']),
+          hidden(-name=>'run',default=>['1']),
+          hidden(-name=>'symbol',default=>$symbol),
+          br,br,
+  submit(-value=>'Go'),
+  endform;
+  
+  if ($run) {
     $symbol = param('symbol');
     my $start_date = param('beginning_date');
     my $end_date = param('ending_date');
     my $future = param('Future');
     if($start_date >= $end_date){
-      print "Error: The start date cannot be on or after the end date";
+      print "Error: The start date cannot be on or after the end date<br>";
       $run = 0;
       $action = "view_stats";
     }
-    else{
+    else {
       $symbol = param('symbol');
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
-      my $output = `plot_stock.pl 'type'="plot" symbol='$symbol'`;
-      print $output;
-      my $past_graph = `get_data.pl  --from=$start_date --to=$end_date --close $symbol > _data.in`;
-      print $past_graph;
-      my $predictions = `time_series_symbol_project.pl $symbol $future`;
-      print $predictions;
+
+      # coefficient of variation
+      my @symbol_stats = SymbolStats($symbol, $start_date, $end_date);
+      my $count = $symbol_stats[0][0];
+      my $stddev = $symbol_stats[0][1];
+      my $avg = $symbol_stats[0][2];
+      my $coefficient_variation = $stddev/$avg;
+      print "<h3>Coefficient of variation: $coefficient_variation</h3>";
+
+      # past performance plot
+      print "<h3>Past performance</h3>";
+      print "<img src='plot_get_data.pl?symbol=".$symbol."&start_date=".$start_date."&end_date=".$end_date."'><br>";
+
+      # FIX THIS!!!!!
+      # # print summary
+      # print "<h3>Summary</h3>";
+      # print "<table>";
+      # my @summary = `~pdinda/339-f15/HANDOUT/portfolio/get_info.pl --field=close --from=\"$start_date\" --to=\"$end_date\" $symbol`;
+      # foreach my $s (@summary) {
+      #   print "<tr>";
+      #   my @values = split /\t/, $s;
+      #   foreach my $v (@values) {
+      #     print "<td>".sprintf("%0.4f", $v)."</td>";
+      #   }
+      #   print "</tr>";
+      # }
+      # print "</table>";
+
+
+      # my $predictions = `/home/pps860/www/pf/time_series_symbol_project.pl AAPL 16 AWAIT 200 AR 16`;
+      # print $predictions;
     }
   }
+
+  print "<a href=\"portfolio.pl?act=portfolio&user_email=$user_email&portfolio_name=$portfolio_name\">Go Back</a>";
     
 }
 
@@ -554,12 +580,24 @@ sub CurrentStats {
   my @rows;
   eval {@rows = ExecSQL($dbuser,$dbpasswd,
        "select open, high, low, close, volume, timestamp from RecentStocksDaily where symbol=? order by timestamp DESC",undef,@_);};
-    if ($@){
-      return (undef, $@);
-    }
-    else{
-      return @rows;
-    }
+  if ($@){
+    return (undef, $@);
+  }
+  else{
+    return @rows;
+  }
+}
+
+sub SymbolStats {
+  my @rows;
+  eval {@rows = ExecSQL($dbuser,$dbpasswd,
+       "select count(close) AS count, stddev(close) AS stddev, avg(close) AS avg from HistoricalData where symbol=? and timestamp >= ? and timestamp <= ?",undef,@_);};
+  if ($@) {
+    return (undef, $@);
+  }
+  else {
+    return @rows;
+  } 
 }
 
 sub AddRecentStocksDaily {

@@ -18,6 +18,7 @@ BEGIN {
     $ENV{ORACLE_HOME}=$ENV{ORACLE_BASE}."/db_1";
     $ENV{ORACLE_SID}="CS339";
     $ENV{LD_LIBRARY_PATH}=$ENV{ORACLE_HOME}."/lib";
+    $ENV{PATH} = $ENV{PATH}.":."; 
     $ENV{BEGIN_BLOCK} = 1;
     exec 'env',cwd().'/'.$0,@ARGV;
   }
