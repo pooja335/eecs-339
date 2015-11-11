@@ -8,7 +8,6 @@ my @sqlinput=();
 my @sqloutput=();
 my $debug;
 
-#use Time::ParseDate;
 use CGI qw(:standard);
 use HTML::Template;
 use Data::Dumper;
@@ -22,7 +21,6 @@ use FileHandle;
 # receive cookies from client
 my $sessioncookie = "pfsession";
 my $inputsessioncookie = cookie($sessioncookie);
-
 
 my $outputsessioncookie = undef;
 my $deletecookie=0;
@@ -116,7 +114,7 @@ print "</head>";
 print "<body>";
 print "<link rel='stylesheet' href='portfolio.css'>";
 
-
+#Add documentation for grading
 if ($action eq "viewerd") {
 	print h2("ER DIAGRAM");
 	print "<img src=\"documentation/erd.png\">";
@@ -135,7 +133,9 @@ if($action eq "viewddl") {
 	print "<img src=\"documentation/ddl2.png\">";
 }
 if($action eq "viewdmldql") {
-	print h2("REST OF SQL");
+	print h2("DML and DQL");
+	print "<img src=\"documentation/dmldql1.png\"><br>";
+	print "<img src=\"documentation/dmldql2.png\">";
 
 }
 
