@@ -711,7 +711,7 @@ sub ChangeCash {
 sub DelHolding {
    eval {ExecSQL($dbuser,$dbpasswd, "delete from holdings where user_email=? and portfolio_name=? and symbol=?",undef,@_);};
   return $@;
-}
+} # Deletes holdings to a pf
 
 sub AddHolding {
   eval { ExecSQL($dbuser,$dbpasswd,
@@ -729,7 +729,7 @@ sub CurrentStats {
   else{
     return @rows;
   }
-}
+} # Selects recent information about a holding
 
 sub SymbolStats {
   my @rows;
@@ -741,7 +741,7 @@ sub SymbolStats {
   else {
     return @rows;
   } 
-}
+} # Selects count, stddev, and avg for the close of a holding
 
 sub AddRecentStocksDaily {
   eval { ExecSQL($dbuser,$dbpasswd,
