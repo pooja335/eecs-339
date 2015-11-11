@@ -223,8 +223,6 @@ if ($action eq "portfolio") {
   $main_pf_template->param(USER_EMAIL => $user_email);
   $main_pf_template->param(PORTFOLIO_NAME => $portfolio_name);
   $main_pf_template->param(VALUE => $marketval);
-  $main_pf_template->param(VOLATILITY => '');
-  $main_pf_template->param(CORRELATION => '');
   $main_pf_template->param(TABLE_DATA => $table_data);
   $main_pf_template->param(CASH_ACCOUNT => @cash);
 
@@ -344,6 +342,60 @@ if ($action eq "edit_cash") {
   print $edit_cash_template->output;
 }
 
+if ($action eq "covariance_matrix") { 
+  print "<h2>Covariance matrix for your portfolio</h2>";
+  my $user_email = param("user_email");
+  my $portfolio_name = param("portfolio_name");
+
+  my $dates = ["",1970, 1971, 1972, 1973, 1974, 1975, 1976, 1977, 1978, 1979, 1980, 1981, 1982, 1983, 1984, 1985, 1986, 1987, 1988, 1989, 1990, 1991, 1992,
+                  1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015];
+  print startform(-name=>'Dates'),
+  'Select a past date range:',
+  br,
+  "From: \t", popup_menu(-name=>'beginning_date', -values=> $dates),
+  " To: ", popup_menu(-name=>'ending_date', -values=> $dates),
+  br, br,
+  hidden(-name=>'act',default=>['covariance_matrix']),
+          hidden(-name=>'user_email',default=>$user_email),
+          hidden(-name=>'portfolio_name',default=>$portfolio_name),
+          hidden(-name=>'run',default=>['1']),
+          br,br,
+  submit(-value=>'Go'),
+  endform;
+  
+  if ($run) {
+    my $start_date = param('beginning_date');
+    my $end_date = param('ending_date');
+    print "<p>hello</p>";
+    print $user_email;
+    print $portfolio_name;
+    my @holding_info = PfHoldings($user_email, $portfolio_name);
+    print @holding_info;
+
+    # get_covar.pl --field1=close --field2=close --from="1/1/99" --to="12/31/00" AAPL IBM G
+
+    if ($start_date == "" or $end_date == "") {
+      print "Please select a start and end date<br>";
+      $run = 0;
+      $action = "covariance_matrix";
+    }
+    elsif ($start_date >= $end_date) {
+      print "Error: The start date cannot be on or after the end date<br>";
+      $run = 0;
+      $action = "covariance_matrix";
+    }
+    else {
+      # convert dates to seconds
+      $start_date = ($start_date - 1970)*60*60*24*365;
+      $end_date = ($end_date - 1970)*60*60*24*365;
+    }
+    
+  }
+
+  print "<a href=\"portfolio.pl?act=portfolio&user_email=$user_email&portfolio_name=$portfolio_name\">Go Back</a>";
+    
+}
+
 if ($action eq "trading_strategy") { 
   my $trading_strategy_template = HTML::Template->new(filename => 'trading_strategy.html');
   my $user_email = param("user_email");
@@ -381,7 +433,6 @@ if ($action eq "trading_strategy") {
   print $trading_strategy_template->output;
 }
 
-
 if ($action eq "view_stats") { 
   my $symbol = param("symbol");
   print "<h2>Yesterday's Market Summary for $symbol</h2>";
@@ -413,6 +464,8 @@ if ($action eq "view_stats") {
   br,
   popup_menu(-name=>'future', -values=> $future_increments),
   hidden(-name=>'act',default=>['view_stats']),
+          hidden(-name=>'user_email',default=>$user_email),
+          hidden(-name=>'portfolio_name',default=>$portfolio_name),
           hidden(-name=>'run',default=>['1']),
           hidden(-name=>'symbol',default=>$symbol),
           br,br,

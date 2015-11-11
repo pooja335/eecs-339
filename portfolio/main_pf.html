@@ -4,8 +4,6 @@
 
 <div class="pf-info">
 	<h2>Estimated value: $<TMPL_VAR NAME=VALUE></h2>
-	<h2>Volatility: <TMPL_VAR NAME=VOLATILITY></h2>
-	<h2>Correlation: <TMPL_VAR NAME=CORRELATION></h2>
 </div>
 
 <div class="pf-holdings">
@@ -24,6 +22,10 @@
 <div class="cash-account">
 	<h2>Cash account: $<TMPL_VAR NAME=CASH_ACCOUNT></h2>
 	<a href="portfolio.pl?act=edit_cash&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">Edit cash account</a>
+</div>
+
+<div class="covariance-matrix">
+	<a href="portfolio.pl?act=covariance_matrix&user_email=<TMPL_VAR NAME=USER_EMAIL>&portfolio_name=<TMPL_VAR NAME=PORTFOLIO_NAME>">View covariance matrix</a>
 </div>
 
 <div class="trading-strategy">
