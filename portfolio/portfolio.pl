@@ -117,6 +117,30 @@ print "<body>";
 print "<link rel='stylesheet' href='portfolio.css'>";
 
 
+if ($action eq "viewerd") {
+	print h2("ER DIAGRAM");
+	print "<img src=\"documentation/erd.png\">";
+}
+if ($action eq "viewsb") {
+		print h2("Storyboard");
+	print "<img src=\"documentation/sb.png\">";
+}
+if($action eq "viewrd") {
+	print h2("Relational Design");
+	print "<img src=\"documentation/rd.png\">";
+}
+if($action eq "viewddl") {
+	print h2("SQL DDL");
+	print "<img src=\"documentation/ddl1.png\"><br>";
+	print "<img src=\"documentation/ddl2.png\"><br>";
+	print "<img src=\"documentation/ddl3.png\">";
+}
+if($action eq "viewdmldql") {
+	print h2("REST OF SQL");
+
+}
+
+
 
 if ($action eq "login") {
 	#print "welcome to login!";
@@ -567,6 +591,15 @@ if ($action eq "view_stats") {
 
 
 #end the page
+
+print"<br><br><br><br><div>";
+print "<a href=\"portfolio.pl?act=viewerd\">view E/R Diagram</a><br>";
+print "<a href=\"portfolio.pl?act=viewsb\">view Storyboard</a><br>";
+print "<a href=\"portfolio.pl?act=viewrd\">view Relational Design</a><br>";
+print "<a href=\"portfolio.pl?act=viewddl\">view DDL</a><br>";
+print "<a href=\"portfolio.pl?act=viewdmldql\">view Queries</a>";
+print "</div>";
+
 print "<script src='https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js'></script>";
 print "<script type='text/javascript' src='portfolio.js'></script>";
 print "</body>";
