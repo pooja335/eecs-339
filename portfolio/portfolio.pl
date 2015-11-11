@@ -119,7 +119,7 @@ print "<link rel='stylesheet' href='portfolio.css'>";
 
 if ($action eq "viewerd") {
 	print h2("ER DIAGRAM");
-	print "<img src=\"documentation/erd.png\" height=\"720\" width=\"960\">";
+	print "<img src=\"documentation/erd.png\">";
 }
 if ($action eq "viewsb") {
 	print "SEE THE STORYBOARD";
@@ -129,10 +129,14 @@ if($action eq "viewrd") {
 	print "<img src=\"documentation/rd.png\">";
 }
 if($action eq "viewddl") {
-	print "SQL DDL";
+	print h2("SQL DDL");
+	print "<img src=\"documentation/ddl1.png\"><br>";
+	print "<img src=\"documentation/ddl2.png\"><br>";
+	print "<img src=\"documentation/ddl3.png\">";
 }
 if($action eq "viewdmldql") {
-	print "REST OF SQL";
+	print h2("REST OF SQL");
+
 }
 
 
