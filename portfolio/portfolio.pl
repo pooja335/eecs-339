@@ -511,12 +511,16 @@ if ($action eq "view_stats") {
           hidden(-name=>'portfolio_name',default=>$portfolio_name),
           hidden(-name=>'run',default=>['1']),
           hidden(-name=>'symbol',default=>$symbol),
+          hidden(-name=>'user_email',default=>$user_email),
+          hidden(-name=>'portfolio_name',default=>$portfolio_name),
           br,br,
   submit(-value=>'Go'),
   endform;
   
   if ($run) {
     $symbol = param('symbol');
+    $user_email = param('user_email');
+    $portfolio_name = param('portfolio_name');
     my $start_date = param('beginning_date');
     my $end_date = param('ending_date');
     my $future = param('future');
