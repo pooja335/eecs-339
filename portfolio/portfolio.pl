@@ -448,15 +448,23 @@ if ($action eq "view_stats") {
       my $stddev = $symbol_stats[0][1];
       my $avg = $symbol_stats[0][2];
       my $coefficient_variation;
-      if ($avg == 0) {
+      if ($avg == 0 or $stddev == 0) {
         print "<h3>No available data</h3>";
       }
       else {
+        # calculate summary
+        my @summary = `~pdinda/339-f15/HANDOUT/portfolio/get_info.pl --field=close --from=\"$start_date\" --to=\"$end_date\" $symbol`;
+        my @headers = split /\t/, $summary[0];
+        my @values = split /\t/, $summary[1];
+
+        # coefficient of variation
         $coefficient_variation = $stddev/$avg;
         print "<h3>Coefficient of variation: $coefficient_variation</h3>";
 
-        # # beta coefficient
-        # print "<h3>Coefficient of variation: $coefficient_variation</h3>";
+        # beta coefficient
+        my $covariance = $values[7];
+        my $beta = $covariance/$stddev;
+        print "<h3>Beta: $beta</h3>";
 
         # past performance plot
         print "<h3>Past performance</h3>";
@@ -464,9 +472,6 @@ if ($action eq "view_stats") {
 
         # print summary
         print "<h3>Summary</h3>";
-        my @summary = `~pdinda/339-f15/HANDOUT/portfolio/get_info.pl --field=close --from=\"$start_date\" --to=\"$end_date\" $symbol`;
-        my @headers = split /\t/, $summary[0];
-        my @values = split /\t/, $summary[1];
         print "<table><tr>";
         foreach my $h (@headers) {
           print "<th>$h</th>";
