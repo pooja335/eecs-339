@@ -411,7 +411,7 @@ if ($action eq "view_stats") {
   br, br,
   'Select how many days into the future to predict: ',
   br,
-  popup_menu(-name=>'Future', -values=> $future_increments),
+  popup_menu(-name=>'future', -values=> $future_increments),
   hidden(-name=>'act',default=>['view_stats']),
           hidden(-name=>'run',default=>['1']),
           hidden(-name=>'symbol',default=>$symbol),
@@ -423,14 +423,21 @@ if ($action eq "view_stats") {
     $symbol = param('symbol');
     my $start_date = param('beginning_date');
     my $end_date = param('ending_date');
-    my $future = param('Future');
-    if($start_date >= $end_date){
+    my $future = param('future');
+    if (($start_date == "" or $end_date == "") and $future == "") {
+      print "Please select a start and end date, or a future date.<br>";
+      $run = 0;
+      $action = "view_stats";
+    }
+    elsif (($start_date == "" or $end_date == "") and $future != "") {
+      # do nothing
+    }
+    elsif ($start_date >= $end_date) {
       print "Error: The start date cannot be on or after the end date<br>";
       $run = 0;
       $action = "view_stats";
     }
     else {
-      $symbol = param('symbol');
       # convert dates to seconds
       $start_date = ($start_date - 1970)*60*60*24*365;
       $end_date = ($end_date - 1970)*60*60*24*365;
@@ -440,32 +447,41 @@ if ($action eq "view_stats") {
       my $count = $symbol_stats[0][0];
       my $stddev = $symbol_stats[0][1];
       my $avg = $symbol_stats[0][2];
-      my $coefficient_variation = $stddev/$avg;
-      print "<h3>Coefficient of variation: $coefficient_variation</h3>";
+      my $coefficient_variation;
+      if ($avg == 0) {
+        print "<h3>No available data</h3>";
+      }
+      else {
+        $coefficient_variation = $stddev/$avg;
+        print "<h3>Coefficient of variation: $coefficient_variation</h3>";
 
-      # past performance plot
-      print "<h3>Past performance</h3>";
-      print "<img src='plot_get_data.pl?symbol=".$symbol."&start_date=".$start_date."&end_date=".$end_date."'><br>";
+        # # beta coefficient
+        # print "<h3>Coefficient of variation: $coefficient_variation</h3>";
 
-      # FIX THIS!!!!!
-      # # print summary
-      # print "<h3>Summary</h3>";
-      # print "<table>";
-      # my @summary = `~pdinda/339-f15/HANDOUT/portfolio/get_info.pl --field=close --from=\"$start_date\" --to=\"$end_date\" $symbol`;
-      # foreach my $s (@summary) {
-      #   print "<tr>";
-      #   my @values = split /\t/, $s;
-      #   foreach my $v (@values) {
-      #     print "<td>".sprintf("%0.4f", $v)."</td>";
-      #   }
-      #   print "</tr>";
-      # }
-      # print "</table>";
+        # past performance plot
+        print "<h3>Past performance</h3>";
+        print "<img src='plot_get_data.pl?symbol=".$symbol."&start_date=".$start_date."&end_date=".$end_date."'><br>";
 
-
-      # my $predictions = `/home/pps860/www/pf/time_series_symbol_project.pl AAPL 16 AWAIT 200 AR 16`;
-      # print $predictions;
+        # print summary
+        print "<h3>Summary</h3>";
+        my @summary = `~pdinda/339-f15/HANDOUT/portfolio/get_info.pl --field=close --from=\"$start_date\" --to=\"$end_date\" $symbol`;
+        my @headers = split /\t/, $summary[0];
+        my @values = split /\t/, $summary[1];
+        print "<table><tr>";
+        foreach my $h (@headers) {
+          print "<th>$h</th>";
+        }
+        print "</tr><tr>";
+        print "<td>$values[0]</td><td>$values[1]</td><td>".sprintf("%0.3f", $values[2])."</td><td>".sprintf("%0.3f", $values[3])."</td><td>".sprintf("%0.3f", $values[4])."</td><td>".sprintf("%0.3f", $values[5])."</td><td>".sprintf("%0.3f", $values[6])."</td><td>".sprintf("%0.3f", $values[7])."</td>";
+        print "</tr></table>";
+      }
     }
+    if ($future > 0) {
+      # future performance plot
+      print "<h3>Future performance</h3>";
+      print "<img src='plot_predictions.pl?symbol=".$symbol."&future=".$future."'><br>";
+    }
+    
   }
 
   print "<a href=\"portfolio.pl?act=portfolio&user_email=$user_email&portfolio_name=$portfolio_name\">Go Back</a>";
