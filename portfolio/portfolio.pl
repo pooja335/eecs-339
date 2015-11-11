@@ -122,7 +122,8 @@ if ($action eq "viewerd") {
 	print "<img src=\"documentation/erd.png\">";
 }
 if ($action eq "viewsb") {
-	print "SEE THE STORYBOARD";
+		print h2("Storyboard");
+	print "<img src=\"documentation/sb.png\">";
 }
 if($action eq "viewrd") {
 	print h2("Relational Design");
