@@ -117,11 +117,12 @@ print "<link rel='stylesheet' href='portfolio.css'>";
 #Add documentation for grading
 if ($action eq "viewerd") {
 	print h2("ER DIAGRAM");
-	print "<img src=\"documentation/erd.png\">";
+	print "<img src=\"documentation/erd.png\"><br>";
 }
 if ($action eq "viewsb") {
 		print h2("Storyboard");
-	print "<img src=\"documentation/sb.png\">";
+	print "<img src=\"documentation/sb.png\"><br>";
+	print "<img src=\"documentation/sbtrans.png\">";
 }
 if($action eq "viewrd") {
 	print h2("Relational Design");
