@@ -122,6 +122,7 @@ if ($action eq "viewerd") {
 if ($action eq "viewsb") {
 		print h2("Storyboard");
 	print "<img src=\"documentation/sb.png\"><br>";
+	print h2("Transactions by page and pageswitch");
 	print "<img src=\"documentation/sbtrans.png\">";
 }
 if($action eq "viewrd") {
