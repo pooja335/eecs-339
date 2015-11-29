@@ -1,0 +1,10 @@
+INIT 16 8
+INSERT d6lniwl6y75eek2y 5gae07lo  # should succeed
+INSERT ibfrjeuktbrzaa55 ub4y2qtp  # should succeed
+INSERT a6lniwl6y75eek2y 3gae07lo  # should succeed
+INSERT a6lniwl6y75eek2y 3gae07lo  # should fail
+INSERT b6lniwl6y75eek2y 4gae07lo  # should succeed
+INSERT e6lniwl6y75eek2y 6gae07lo  # should succeed
+INSERT jbfrjeuktbrzaa55 ub4y2qtp  # should succeed
+INSERT gbfrjeuktbrzaa55 ub4y2qtp  # should succeed
+DEINIT
