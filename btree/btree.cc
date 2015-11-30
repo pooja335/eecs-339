@@ -244,8 +244,8 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 						return b.GetVal(offset,value);
 					}//BTREE_OP_LOOKUP
 					else { 
-						if (b.info.valuesize<value){ 
-							return ERR_SIZE;
+						if ( b.info.valuesize < sizeof(value) ){ 
+							return ERROR_SIZE;
 						}//if value is too big, error
 						
 						//return b.SetVal(offset, value);//set the value and quit
@@ -366,7 +366,13 @@ static ERROR_T PrintNode(ostream &os, SIZE_T nodenum, BTreeNode &b, BTreeDisplay
 //operations
 ERROR_T BTreeIndex::Lookup(const KEY_T &key, VALUE_T &value)
 {
-  return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_LOOKUP, key, value);
+  	return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_LOOKUP, key, value);
+}
+
+ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
+{
+	VALUE_T valcast = (VALUE_T) value;
+  	return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, valcast);
 }
 
 ERROR_T BTreeIndex::Insert(const KEY_T &key, const VALUE_T &value)
@@ -375,10 +381,7 @@ ERROR_T BTreeIndex::Insert(const KEY_T &key, const VALUE_T &value)
   return ERROR_UNIMPL;
 }
   
-ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
-{
-  return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, value);
-}
+
 
 ERROR_T BTreeIndex::Delete(const KEY_T &key)
 {
