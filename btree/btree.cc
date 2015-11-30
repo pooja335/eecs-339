@@ -24,6 +24,9 @@ KeyValuePair & KeyValuePair::operator=(const KeyValuePair &rhs)
   return *( new (this) KeyValuePair(rhs));
 }
 
+
+
+
 BTreeIndex::BTreeIndex(SIZE_T keysize, 
 		       SIZE_T valuesize,
 		       BufferCache *cache,
@@ -39,8 +42,6 @@ BTreeIndex::BTreeIndex()
 {
   // shouldn't have to do anything
 }
-
-
 //
 // Note, will not attach!
 //
@@ -56,13 +57,14 @@ BTreeIndex::~BTreeIndex()
   // shouldn't have to do anything
 }
 
-
 BTreeIndex & BTreeIndex::operator=(const BTreeIndex &rhs)
 {
   return *(new(this)BTreeIndex(rhs));
 }
 
 
+
+//node (de)allocation
 ERROR_T BTreeIndex::AllocateNode(SIZE_T &n)
 {
   n=superblock.info.freelist;
@@ -85,7 +87,6 @@ ERROR_T BTreeIndex::AllocateNode(SIZE_T &n)
 
   return ERROR_NOERROR;
 }
-
 
 ERROR_T BTreeIndex::DeallocateNode(const SIZE_T &n)
 {
@@ -111,6 +112,9 @@ ERROR_T BTreeIndex::DeallocateNode(const SIZE_T &n)
 
 }
 
+
+
+//attach/detach
 ERROR_T BTreeIndex::Attach(const SIZE_T initblock, const bool create)
 {
   ERROR_T rc;
@@ -178,13 +182,14 @@ ERROR_T BTreeIndex::Attach(const SIZE_T initblock, const bool create)
   return superblock.Unserialize(buffercache,initblock);
 }
     
-
 ERROR_T BTreeIndex::Detach(SIZE_T &initblock)
 {
   return superblock.Serialize(buffercache,superblock_index);
 }
  
 
+
+//meat of lookup & update
 ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 					   const BTreeOp op,
 					   const KEY_T &key,
@@ -258,6 +263,8 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 
   return ERROR_INSANE;
 }
+
+
 
 
 static ERROR_T PrintNode(ostream &os, SIZE_T nodenum, BTreeNode &b, BTreeDisplayType dt)
@@ -351,7 +358,10 @@ static ERROR_T PrintNode(ostream &os, SIZE_T nodenum, BTreeNode &b, BTreeDisplay
   }
   return ERROR_NOERROR;
 }
-  
+
+
+
+//operations
 ERROR_T BTreeIndex::Lookup(const KEY_T &key, VALUE_T &value)
 {
   return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_LOOKUP, key, value);
@@ -368,7 +378,6 @@ ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
   return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, value);
 }
 
-  
 ERROR_T BTreeIndex::Delete(const KEY_T &key)
 {
   // This is optional extra credit 
@@ -377,13 +386,9 @@ ERROR_T BTreeIndex::Delete(const KEY_T &key)
   return ERROR_UNIMPL;
 }
 
-  
-//
-//
+
 // DEPTH first traversal
 // DOT is Depth + DOT format
-//
-
 ERROR_T BTreeIndex::DisplayInternal(const SIZE_T &node,
 				    ostream &o,
 				    BTreeDisplayType display_type) const
@@ -442,7 +447,6 @@ ERROR_T BTreeIndex::DisplayInternal(const SIZE_T &node,
   return ERROR_NOERROR;
 }
 
-
 ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
 {
   ERROR_T rc;
@@ -457,9 +461,15 @@ ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
 }
 
 
+
+
 ERROR_T BTreeIndex::SanityCheck() const
 {
-  // WRITE ME
+  
+  // Is it a tree? -- check for cycles (if unexplored edge leads to visited node before leaves)
+  // Is it in order? -- in-order traversal, then check if they're in order
+  // Is it balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
+  // Does each node have a valid use ratio?
   return ERROR_UNIMPL;
 }
   
