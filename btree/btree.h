@@ -64,7 +64,11 @@ class BTreeIndex {
 
   ERROR_T       CreateLeaf(const KEY_T &key, const VALUE_T &value, SIZE_T &newptr);
 
+  ERROR_T       SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentoffset, const SIZE_T &parentAddress);
+
   ERROR_T       InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const VALUE_T &value);
+
+  ERROR_T       InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZE_T &ptr);
 
   ERROR_T      DisplayInternal(const SIZE_T &node,
 			       ostream &o, 

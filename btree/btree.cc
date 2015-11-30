@@ -373,9 +373,9 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
 
         rc= b.Unserialize(buffercache,node);
 
-        if (rc!=ERROR_NOERROR) { 
-                return rc;
-        }
+        if (rc) { return rc; }
+
+        cout << "Node: " << node << ", key: " << key.data << ", val: " << value.data << endl;
 
         // CHECK HERE IF KEYSIZE AND  VALUESIZE ARE VALID
 
@@ -387,48 +387,45 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
                 case BTREE_ROOT_NODE:
                 if (b.info.numkeys == 0) {
                         rc = CreateLeaf(key, value, newptr); //newptr gets assigned in CreateLeaf
-                        if (rc) {  
-                                return rc; 
-                        }
+                        if (rc) {  return rc; }
                         b.info.numkeys++;
                         b.SetKey(0, key);
                         b.SetPtr(0, newptr);
                         rc = b.Serialize(buffercache, node); 
-                        if (rc) {
-                                return rc;
-                        }
+                        if (rc) { return rc; }
                         return ERROR_NOERROR;
                 }
                 case BTREE_INTERIOR_NODE: //this case doesn't insert, it's trying to find correct leaf
                 for (offset = 0; offset < b.info.numkeys; offset++) { 
                         rc=b.GetKey(offset,testkey); //testkey now holds value of node's key at offset
-                        if (rc) {  
-                                return rc; 
-                        }
+                        if (rc) { return rc; }
                         if (key < testkey || key == testkey) {
                                 rc = b.GetPtr(offset,ptr);
-                                return InsertInternal(ptr, key, value);
+                                if (rc) { return rc; }
+                                rc = InsertInternal(ptr, key, value);
+                                if (rc == WARNING_SPLIT) {
+                                        return SplitLeaf(b, ptr, offset, node); //takes parent and child and parent's offset
+                                }        
+                                return rc;
                         }
                 }
-                // if we got here, we need to go to the next pointer, if it exists
+                // if we got here, we need to go to the rightmost pointer, if it exists
                 if (b.info.numkeys > 0) { 
-                        rc = b.GetPtr(b.info.numkeys, ptr); //b.info.numkeys is the index of the last ptr
-                        if (rc) { 
-                                return rc; 
-                        }
-                        if (ptr != 0) {
-                                return InsertInternal(ptr,key,value);
+                        rc = b.GetPtr(b.info.numkeys, ptr); //b.info.numkeys is the index of the rightmost ptr
+                        if (rc) { return rc; }
+                        if (ptr != 0) { //if the right pointer does exist
+                                rc = InsertInternal(ptr, key, value);
+                                if (rc == WARNING_SPLIT) {
+                                        return SplitLeaf(b, ptr, offset, node); //takes parent and child and parent's offset
+                                }
+                                return rc;
                         }
                         else { //if the right pointer and leaf doesn't exist, create a leaf and pointer
                                 rc = CreateLeaf(key, value, newptr);
-                                if (rc) {
-                                        return rc;
-                                }
+                                if (rc) { return rc; }
                                 b.SetPtr(b.info.numkeys, newptr);
                                 rc = b.Serialize(buffercache, node); 
-                                if (rc) {
-                                        return rc;
-                                }
+                                if (rc) { return rc; }
                                 return ERROR_NOERROR;
                         }
                 } 
@@ -442,20 +439,137 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
                 if (b.info.numkeys < numSlots) {
                         // insert key and value here
                         rc = InsertKeyValueIntoLeaf(b, key, value);
-                        if (rc) {  
-                                return rc; 
-                        }
+                        if (rc) { return rc; }
                         rc = b.Serialize(buffercache, node);
-                        if (rc) {  
-                                return rc; 
+                        cout << "inserted keyval" << endl;
+                        if (rc) { return rc; }
+                        if (b.info.numkeys == numSlots) { //SPLIT CASE
+                                return WARNING_SPLIT; //TELL NODE TO SPLIT
                         }
                         return ERROR_NOERROR;
                 }
-                else {
-                        // SPLIT CASE
+                else { //this should never be called
+                        return ERROR_INSANE;
                 }
         }
+        cout << "location 1" << endl;
         return ERROR_INSANE;
+}
+
+ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentoffset, const SIZE_T &parentAddress) 
+{
+        cout << "SPLITTING WOOT" << endl;
+        BTreeNode leaf; 
+        SIZE_T newptr;
+        SIZE_T offset;
+        SIZE_T ii;
+        KEY_T keytosplit;
+        VALUE_T valuetosplit;
+        KEY_T tmpkey;
+        VALUE_T tmpvalue;
+        ERROR_T rc;
+        leaf.Unserialize(buffercache, child);
+
+        offset = (leaf.info.numkeys / 2); //find where to split
+        leaf.GetKey(offset, keytosplit);
+        cout << "key: " << keytosplit.data << ", offset: " << offset << ", leaf.info.numkeys: " << leaf.info.numkeys << endl;
+        
+        leaf.GetKey(0, tmpkey);
+        cout << "first: " << tmpkey.data << endl;
+        leaf.GetKey(1, tmpkey);
+        cout << "second: " << tmpkey.data << endl;
+        leaf.GetKey(2, tmpkey);
+        cout << "third: " << tmpkey.data << endl;
+        
+        leaf.GetVal(offset, valuetosplit);
+        rc = CreateLeaf(keytosplit, valuetosplit, newptr); //Create new leaf called newptr
+        if (rc) { return rc; }
+        for (ii = offset + 1; ii < leaf.info.numkeys; ii++) { //Move stuff into new leaf
+                leaf.GetKey(ii, tmpkey);
+                leaf.GetVal(ii, tmpvalue);
+                rc = InsertInternal(newptr, tmpkey, tmpvalue); //Insert and serialize new leaf (newptr)
+                if (rc) { return rc; }
+        }
+        leaf.info.numkeys = offset; //set number of keys to how many we care about
+        cout << "numkeys" << leaf.info.numkeys << endl;
+
+        // this condition handles case where we aren't splitting rightmost leaf - find offset in interior node
+        if (parentoffset < parent.info.numkeys) {
+                //get highest key and value of left leaf and insert this key into the parent
+                leaf.GetKey(offset - 1, tmpkey);
+                rc = InsertKeyPtrIntoInterior(parent, tmpkey, child);
+                if (rc) { return rc; }
+                //set ptr of next key in interior to newly created (right) leaf
+                parent.SetPtr(parentoffset + 1, newptr);
+        }
+        // if we are splitting rightmost leaf, we already know where to put the key in the interior node
+        else {
+                parent.info.numkeys++; //add space for extra key
+                //get highest key and value of left leaf and insert this key and ptr at end of parent
+                leaf.GetKey(offset - 1, tmpkey);
+                parent.SetKey(parent.info.numkeys - 1, tmpkey);
+                parent.SetPtr(parent.info.numkeys - 1, child);
+                //set rightmost pointer to newly created leaf
+                parent.SetPtr(parent.info.numkeys, newptr);
+        }
+
+        leaf.Serialize(buffercache, child);
+        parent.Serialize(buffercache, parentAddress);
+
+        cout << "parent.info.numkeys" << parent.info.numkeys << endl;
+
+        parent.GetKey(0, tmpkey);
+        parent.GetPtr(0, newptr);
+        cout << "first: " << tmpkey.data << ", ptr: " << newptr << endl;
+        parent.GetKey(1, tmpkey);
+        parent.GetPtr(1, newptr);
+        cout << "second: " << tmpkey.data << ", ptr: " << newptr << endl;
+        parent.GetPtr(2, newptr);
+        cout << "third ptr: " << newptr << endl;
+
+        return ERROR_NOERROR;
+}
+
+ERROR_T BTreeIndex::InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZE_T &ptr) 
+{
+        SIZE_T offset;
+        KEY_T testkey;
+        SIZE_T testptr;
+        ERROR_T rc;
+
+        SIZE_T oldnumkeys = b.info.numkeys;
+        b.info.numkeys++; 
+
+        // first, move over right most pointer so it doesn't get overwritten
+        rc = b.GetPtr(oldnumkeys, testptr);
+        if (rc) { return rc; }
+        b.SetPtr(b.info.numkeys, testptr);
+
+        // then move everything else into the correct place
+        for (offset = oldnumkeys; offset > 0; offset--) { 
+                rc = b.GetKey(offset - 1, testkey); //testkey now holds value of node's key at offset - 1
+                if (rc) { return rc; }
+                if (testkey < key) {
+                        b.SetKey(oldnumkeys, key);
+                        b.SetPtr(oldnumkeys, ptr);
+                        break;
+                }
+                else if (key == testkey) {
+                        return ERROR_CONFLICT;
+                }
+                else {
+                        // move things over to the right
+                        rc = b.GetPtr(offset - 1, testptr);
+                        if (rc) { return rc; }
+                        b.SetKey(offset, testkey);
+                        b.SetPtr(offset, testptr);
+                        if (offset == 1) { //accounts for last case, when inserting at beginning of node
+                                b.SetKey(0, key);
+                                b.SetPtr(0, ptr);
+                        }
+                }                
+        }        
+        return ERROR_NOERROR;
 }
 
 ERROR_T BTreeIndex::InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const VALUE_T &value) 
@@ -469,24 +583,24 @@ ERROR_T BTreeIndex::InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const
         b.info.numkeys++;
         for (offset = oldnumkeys; offset > 0; offset--) { 
                 rc = b.GetKey(offset - 1, testkey); //testkey now holds value of node's key at offset - 1
-                if (rc) {  
-                        return rc; 
-                }
-                // cout << "testkey: " << testkey.data << endl;
+                if (rc) { return rc; }
+                cout << "testkey: " << testkey.data << endl;
                 if (testkey < key) {
-                        b.SetKey(oldnumkeys, key);
-                        b.SetVal(oldnumkeys, value);
+                        cout << "key is greater than testkey, key: " << key.data << endl;
+                        b.SetKey(offset, key);
+                        b.SetVal(offset, value);
                         break;
                 }
                 else if (key == testkey) {
+                        cout << "key is equal to testkey, key: " << key.data << endl;
                         return ERROR_CONFLICT;
                 }
                 else {
+                        cout << "key is less than testkey, key: " << key.data << endl;
                         // move things over to the right
                         rc = b.GetVal(offset - 1, testvalue);
-                        if (rc) {  
-                                return rc; 
-                        }
+                        cout << "offset: " << offset << endl;
+                        if (rc) { return rc; }
                         b.SetKey(offset, testkey);
                         b.SetVal(offset, testvalue);
                         if (offset == 1) { //accounts for last case, when inserting at beginning of leaf
@@ -494,7 +608,15 @@ ERROR_T BTreeIndex::InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const
                                 b.SetVal(0, value);
                         }
                 }                
-        }        
+        }
+        if (2 < b.info.numkeys) {
+                b.GetKey(0, testkey);
+                cout << "first: " << testkey.data << endl;
+                b.GetKey(1, testkey);
+                cout << "second: " << testkey.data << endl;
+                b.GetKey(2, testkey);
+                cout << "third: " << testkey.data << endl; 
+        }       
         return ERROR_NOERROR;
 }
 
@@ -504,18 +626,14 @@ ERROR_T BTreeIndex::CreateLeaf(const KEY_T &key, const VALUE_T &value, SIZE_T &n
         ERROR_T rc;
 
         rc = root.Unserialize(buffercache,superblock.info.rootnode);
-        if (rc) { 
-                return rc; 
-        }
+        if (rc) { return rc; }
         AllocateNode(newptr);
         BTreeNode b = BTreeNode(BTREE_LEAF_NODE, root.info.keysize, root.info.valuesize, root.info.blocksize);
         b.info.numkeys++;
         b.SetKey(0, key);
         b.SetVal(0, value);
         rc = b.Serialize(buffercache, newptr);
-        if (rc) {
-                return rc;
-        }
+        if (rc) { return rc; }
         return ERROR_NOERROR;
 }
 
