@@ -195,73 +195,75 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 					   const KEY_T &key,
 					   VALUE_T &value)
 {
-  BTreeNode b;
-  ERROR_T rc;
-  SIZE_T offset;
-  KEY_T testkey;
-  SIZE_T ptr;
+	BTreeNode b;
+	ERROR_T rc;
+	SIZE_T offset;
+	KEY_T testkey;
+	SIZE_T ptr;
 
-  rc= b.Unserialize(buffercache,node);
+	rc= b.Unserialize(buffercache,node);
 
-  if (rc!=ERROR_NOERROR) { //if there's an error, return it
-    return rc;
-  }
-
-  switch (b.info.nodetype) { 
-  case BTREE_ROOT_NODE://traverse if root or interior
-  case BTREE_INTERIOR_NODE:
-    // Scan through key/ptr pairs
-    //and recurse if possible
-    for (offset=0;offset<b.info.numkeys;offset++) { 
-      rc=b.GetKey(offset,testkey);
-      if (rc) {  return rc; }
-      if (key<testkey || key==testkey) {
-		// OK, so we now have the first key that's larger
-		// so we ned to recurse on the ptr immediately previous to 
-		// this one, if it exists
-		rc=b.GetPtr(offset,ptr);
-		if (rc) { return rc; }
-		return LookupOrUpdateInternal(ptr,op,key,value);
-     }
-    }
-    // if we got here, we need to go to the next pointer, if it exists
-    if (b.info.numkeys>0) { 
-      rc=b.GetPtr(b.info.numkeys,ptr);
-      if (rc) { return rc; }
-      return LookupOrUpdateInternal(ptr,op,key,value);
-    } else {
-      // There are no keys at all on this node, so nowhere to go
-      return ERROR_NONEXISTENT;
-    }
-    break;
-  case BTREE_LEAF_NODE:
-    // Scan through keys looking for matching value
-    for (offset=0;offset<b.info.numkeys;offset++) { 
-      rc=b.GetKey(offset,testkey);
-      if (rc) {  return rc; }
-      if (testkey==key) { 
-	if (op==BTREE_OP_LOOKUP) { 
-	  return b.GetVal(offset,value);
-	} else { 
-	  // BTREE_OP_UPDATE
-	  //return b.SetVal(offset, value);
-	  rc = b.SetVal(offset,value);
-	  if (rc) {return rc;}
-	  return b.Unserialize(buffercache, node);
-	  // deal with buffercache?
+	if (rc!=ERROR_NOERROR) {return rc;} //if unserialize errs, return it
+	
+	switch (b.info.nodetype) { 
+		case BTREE_ROOT_NODE://traverse if root or interior
+		case BTREE_INTERIOR_NODE:
+    		// Scan through key/ptr pairs
+    		//and recurse if possible
+    		for (offset=0;offset<b.info.numkeys;offset++) { 
+				rc=b.GetKey(offset,testkey);
+				if (rc) {  return rc; }
+				if (key<testkey || key==testkey) {
+					// OK, so we now have the first key that's larger
+					// so we ned to recurse on the ptr immediately previous to 
+					// this one, if it exists
+					rc=b.GetPtr(offset,ptr);
+					if (rc) { return rc; }
+			
+					return LookupOrUpdateInternal(ptr,op,key,value);
+     			}
+    		}
+    		// if we got here, we need to go to the next pointer, if it exists
+			if (b.info.numkeys>0) { 
+				rc=b.GetPtr(b.info.numkeys,ptr);
+				if (rc) { return rc; }
+		
+				return LookupOrUpdateInternal(ptr,op,key,value);
+			} else {
+				// There are no keys at all on this node, so nowhere to go
+				return ERROR_NONEXISTENT;
+			}
+			break;
+  		case BTREE_LEAF_NODE:
+    		// Scan through keys looking for matching value
+			for (offset=0;offset<b.info.numkeys;offset++) { 
+				rc=b.GetKey(offset,testkey);
+				if (rc) {  return rc; }
+				if (testkey==key) { 
+					if (op==BTREE_OP_LOOKUP) { 
+						return b.GetVal(offset,value);
+					}//BTREE_OP_LOOKUP
+					else { 
+						if (b.info.valuesize<value){ 
+							return ERR_SIZE;
+						}//if value is too big, error
+						
+						//return b.SetVal(offset, value);//set the value and quit
+						rc = b.SetVal(offset,value);//set the value
+						if (rc) {return rc;}
+						return b.Unserialize(buffercache, node);// deal with buffercache?
 	  
-	}
-      }
-    }
-    return ERROR_NONEXISTENT;
-    break;
-  default:
-    // We can't be looking at anything other than a root, internal, or leaf
-    return ERROR_INSANE;
-    break;
-  }  
-
-  return ERROR_INSANE;
+					}// BTREE_OP_UPDATE
+				}
+			}
+			return ERROR_NONEXISTENT;
+			break;
+  		default:
+    		// We can't be looking at anything other than a root, internal, or leaf
+    		return ERROR_INSANE;
+    		break;
+  	}  
+  	return ERROR_INSANE;
 }
 
 
