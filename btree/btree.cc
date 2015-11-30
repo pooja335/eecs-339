@@ -460,6 +460,7 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentof
 {
         cout << "SPLITTING WOOT" << endl;
         BTreeNode leaf; 
+        BTreeNode newptrdata;
         SIZE_T newptr;
         SIZE_T offset;
         SIZE_T ii;
@@ -468,7 +469,8 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentof
         KEY_T tmpkey;
         VALUE_T tmpvalue;
         ERROR_T rc;
-        leaf.Unserialize(buffercache, child);
+        rc = leaf.Unserialize(buffercache, child);
+        if (rc) { return rc; }
 
         offset = (leaf.info.numkeys / 2); //find where to split
         leaf.GetKey(offset, keytosplit);
@@ -484,11 +486,13 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentof
         leaf.GetVal(offset, valuetosplit);
         rc = CreateLeaf(keytosplit, valuetosplit, newptr); //Create new leaf called newptr
         if (rc) { return rc; }
-        for (ii = offset + 1; ii < leaf.info.numkeys; ii++) { //Move stuff into new leaf
+        newptrdata.Unserialize(buffercache, newptr);
+        if (rc) { return rc; }
+        for (ii = offset + 1; ii < leaf.info.numkeys; ii++) { //Move stuff into new leaf (newptr)
                 leaf.GetKey(ii, tmpkey);
                 leaf.GetVal(ii, tmpvalue);
-                rc = InsertInternal(newptr, tmpkey, tmpvalue); //Insert and serialize new leaf (newptr)
-                if (rc) { return rc; }
+                rc = InsertKeyValueIntoLeaf(newptrdata, tmpkey, tmpvalue);
+                if (rc) { return rc; } 
         }
         leaf.info.numkeys = offset; //set number of keys to how many we care about
         cout << "numkeys" << leaf.info.numkeys << endl;
@@ -514,6 +518,7 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentof
         }
 
         leaf.Serialize(buffercache, child);
+        newptrdata.Serialize(buffercache, newptr);
         parent.Serialize(buffercache, parentAddress);
 
         cout << "parent.info.numkeys" << parent.info.numkeys << endl;
