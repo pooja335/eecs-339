@@ -251,7 +251,7 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 						//return b.SetVal(offset, value);//set the value and quit
 						rc = b.SetVal(offset,value);//set the value
 						if (rc) {return rc;}
-						return b.Unserialize(buffercache, node);// deal with buffercache?
+						return b.Serialize(buffercache, node);// deal with buffercache?
 	  
 					}// BTREE_OP_UPDATE
 				}
