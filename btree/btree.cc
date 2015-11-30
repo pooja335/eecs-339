@@ -198,12 +198,12 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 
   rc= b.Unserialize(buffercache,node);
 
-  if (rc!=ERROR_NOERROR) { 
+  if (rc!=ERROR_NOERROR) { //if there's an error, return it
     return rc;
   }
 
   switch (b.info.nodetype) { 
-  case BTREE_ROOT_NODE:
+  case BTREE_ROOT_NODE://traverse if root or interior
   case BTREE_INTERIOR_NODE:
     // Scan through key/ptr pairs
     //and recurse if possible
@@ -211,13 +211,13 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
       rc=b.GetKey(offset,testkey);
       if (rc) {  return rc; }
       if (key<testkey || key==testkey) {
-	// OK, so we now have the first key that's larger
-	// so we ned to recurse on the ptr immediately previous to 
-	// this one, if it exists
-	rc=b.GetPtr(offset,ptr);
-	if (rc) { return rc; }
-	return LookupOrUpdateInternal(ptr,op,key,value);
-      }
+		// OK, so we now have the first key that's larger
+		// so we ned to recurse on the ptr immediately previous to 
+		// this one, if it exists
+		rc=b.GetPtr(offset,ptr);
+		if (rc) { return rc; }
+		return LookupOrUpdateInternal(ptr,op,key,value);
+     }
     }
     // if we got here, we need to go to the next pointer, if it exists
     if (b.info.numkeys>0) { 
@@ -239,8 +239,8 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 	  return b.GetVal(offset,value);
 	} else { 
 	  // BTREE_OP_UPDATE
-	  // WRITE ME
-	  return ERROR_UNIMPL;
+	  return b.SetVal(offset,value);
+	  // deal with buffercache?
 	}
       }
     }

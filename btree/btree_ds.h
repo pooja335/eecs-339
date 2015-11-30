@@ -92,7 +92,7 @@ struct BTreeNode {
   ERROR_T GetKeyVal(const SIZE_T offset, KeyValuePair &p) const; // Gives  the ith key value pair (leaf)
 
 
-  ERROR_T SetKey(const SIZE_T offset, const KEY_T &k); // Writesthe ith key  (interior or leaf)
+  ERROR_T SetKey(const SIZE_T offset, const KEY_T &k); // Writes the ith key  (interior or leaf)
   ERROR_T SetPtr(const SIZE_T offset, const SIZE_T &p);   // Writes the ith pointer (interior)
   ERROR_T SetVal(const SIZE_T offset, const VALUE_T &v); // Writes the ith value (leaf)
   ERROR_T SetKeyVal(const SIZE_T offset, const KeyValuePair &p); // Writes the ith key value pair (leaf)
