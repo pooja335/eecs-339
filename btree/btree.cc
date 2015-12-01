@@ -244,12 +244,10 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 						return b.GetVal(offset,value);
 					}//BTREE_OP_LOOKUP
 					else { 
-// 						cout << "GOT TO UPDATE" << endl;	
-// 						//return b.SetVal(offset, value);//set the value and quit
-// 						rc = b.SetVal(offset,value);//set the value
-// 						if (rc) {return rc;}
-// 						return b.Serialize(buffercache, node);// deal with buffercache?
-	  
+						cout << "GOT TO UPDATE" << endl;	
+						rc = b.SetVal(offset,value);//set the value
+						if (rc) {return rc;}//if unsuccessful, get out
+						return b.Serialize(buffercache, node);// write the updated node
 					}// BTREE_OP_UPDATE
 				}
 			}
