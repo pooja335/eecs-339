@@ -1,0 +1,4 @@
+INIT 16 16
+INSERT a6lniwl6y75eek2y 3gae07locibfrjeu  # should succeed
+UPDATE tbrzaa55ub4y2qtp qikhs0cinxy5b0dz  # should fail
+DEINIT
