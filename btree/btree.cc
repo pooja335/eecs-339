@@ -244,14 +244,11 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 						return b.GetVal(offset,value);
 					}//BTREE_OP_LOOKUP
 					else { 
-						if ( b.info.valuesize < sizeof(value) ){ 
-							return ERROR_SIZE;
-						}//if value is too big, error
-						
-						//return b.SetVal(offset, value);//set the value and quit
-						rc = b.SetVal(offset,value);//set the value
-						if (rc) {return rc;}
-						return b.Serialize(buffercache, node);// deal with buffercache?
+// 						cout << "GOT TO UPDATE" << endl;	
+// 						//return b.SetVal(offset, value);//set the value and quit
+// 						rc = b.SetVal(offset,value);//set the value
+// 						if (rc) {return rc;}
+// 						return b.Serialize(buffercache, node);// deal with buffercache?
 	  
 					}// BTREE_OP_UPDATE
 				}
@@ -366,13 +363,26 @@ static ERROR_T PrintNode(ostream &os, SIZE_T nodenum, BTreeNode &b, BTreeDisplay
 //operations
 ERROR_T BTreeIndex::Lookup(const KEY_T &key, VALUE_T &value)
 {
-  	return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_LOOKUP, key, value);
+	if (key.length != superblock.info.keysize || value.length != superblock.info.valuesize){
+		return ERROR_SIZE;
+	}// check user input
+	else {
+  		return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_LOOKUP, key, value);
+  	}// execute the lookup
 }
 
 ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
 {
-	VALUE_T valcast = (VALUE_T) value;
-  	return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, valcast);
+// 	cout<<"superblock.info.keysize: "<<superblock.info.keysize<<endl;
+// 	cout<<"key.length: "<<key.length<<endl;
+// 	cout<<"superblock.info.valuesize: "<<superblock.info.valuesize<<endl;
+// 	cout<<"value.length: "<<value.length<<endl;
+	if (key.length != superblock.info.keysize || value.length != superblock.info.valuesize){
+		return ERROR_SIZE;
+	}// check user input 
+	else {
+   		return LookupOrUpdateInternal(superblock.info.rootnode, BTREE_OP_UPDATE, key, (VALUE_T&) value);
+   	}// execute the update
 }
 
 ERROR_T BTreeIndex::Insert(const KEY_T &key, const VALUE_T &value)
@@ -470,7 +480,6 @@ ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
 
 ERROR_T BTreeIndex::SanityCheck() const
 {
-  
   // Is it a tree? -- check for cycles (if unexplored edge leads to visited node before leaves)
   // Is it in order? -- in-order traversal, then check if they're in order
   // Is it balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
