@@ -64,7 +64,13 @@ class BTreeIndex {
 
   ERROR_T       CreateLeaf(const KEY_T &key, const VALUE_T &value, SIZE_T &newptr);
 
-  ERROR_T       SplitLeaf(BTreeNode &parent, SIZE_T &child, SIZE_T &parentoffset, const SIZE_T &parentAddress);
+  ERROR_T       Split(BTreeNode &parent, SIZE_T &child, SIZE_T &parentoffset, const SIZE_T &parentAddress);
+
+  ERROR_T       SplitLeaf(BTreeNode &parent, BTreeNode &leaf, const SIZE_T &parentAddress, SIZE_T &child, SIZE_T parentoffset);
+
+  ERROR_T       SplitInterior(BTreeNode &parent, BTreeNode &childnode, const SIZE_T &parentAddress, SIZE_T &child, SIZE_T parentoffset); 
+
+  ERROR_T       SplitRoot(BTreeNode &oldroot, const SIZE_T &node);
 
   ERROR_T       InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const VALUE_T &value);
 
