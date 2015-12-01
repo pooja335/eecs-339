@@ -380,7 +380,7 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
         cout << "Node: " << node << ", key: " << key.data << ", val: " << value.data << endl;
 
         // CHECK HERE IF KEYSIZE AND VALUESIZE ARE VALID
-        if (b.info.keysize < key.length || b.info.valuesize < value.length) {
+        if (b.info.keysize != key.length || b.info.valuesize != value.length) {
                 return ERROR_SIZE;
         } 
 
