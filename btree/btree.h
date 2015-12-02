@@ -80,8 +80,10 @@ class BTreeIndex {
 			       ostream &o, 
 			       const BTreeDisplayType display_type=BTREE_DEPTH) const;
 			       
-  ERROR_T		SanityCheckInternal(const SIZE_T &root) const; //calls a bunch of tests on the btree
-  ERROR_T		SCIOrder(const SIZE_T &node) const;//checks if btree keys are in order
+  ERROR_T		SanityCheckInternal(const SIZE_T &root) const; // calls a bunch of tests on the btree
+  ERROR_T		SCIOrder(const SIZE_T &node) const;// checks if btree keys are in order
+  ERROR_T		SCIRatio(const SIZE_T &node) const;
+  ERROR_T		SCIBalanced(const SIZE_T &node) const;// checks if btree is balanced
 public:
   //
   // keysize and valueszie should be stored in the 

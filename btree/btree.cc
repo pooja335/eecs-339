@@ -28,9 +28,9 @@ KeyValuePair & KeyValuePair::operator=(const KeyValuePair &rhs)
 
 
 BTreeIndex::BTreeIndex(SIZE_T keysize, 
- SIZE_T valuesize,
- BufferCache *cache,
- bool unique) 
+ 						SIZE_T valuesize,
+ 						BufferCache *cache,
+ 						bool unique) 
 {
       superblock.info.keysize=keysize;
       superblock.info.valuesize=valuesize;
@@ -836,22 +836,22 @@ ERROR_T BTreeIndex::DisplayInternal(const SIZE_T &node,
               }
               rc=DisplayInternal(ptr,o,display_type);
               if (rc) { return rc; }
-      }
-}
-return ERROR_NOERROR;
-break;
-case BTREE_LEAF_NODE:
-return ERROR_NOERROR;
-break;
-default:
-if (display_type==BTREE_DEPTH_DOT) { 
-} else {
-  o << "Unsupported Node Type " << b.info.nodetype ;
-}
-return ERROR_INSANE;
-}
+      	  }
+	  }
+	  return ERROR_NOERROR;
+	  break;
+  case BTREE_LEAF_NODE:
+	  return ERROR_NOERROR;
+	  break;
+  default:
+	  if (display_type==BTREE_DEPTH_DOT) { 
+	  } else {
+  		o << "Unsupported Node Type " << b.info.nodetype ;
+	  }
+	  return ERROR_INSANE;
+  }
 
-return ERROR_NOERROR;
+  return ERROR_NOERROR;
 }
 
 ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
@@ -879,17 +879,19 @@ ERROR_T BTreeIndex::SanityCheckInternal(const SIZE_T &root) const
 {
 	ERROR_T rc;
 	
-	// Is it in order?
+	// Is it a tree? -- check for cycles (unexplored edge leads somewhere explored)
+	// Is BTree sorted?
 	rc = SCIOrder(root);
 	if(rc){return rc;}
-	// Is it a tree? -- check for cycles (unexplored edge leads somewhere explored)
 	
-  	// Is it balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
+  	// Is BTree balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
+//   	rc = SCIBalanced(root);
+//   	if(rc){return rc;}
   	
   	// Does each node have a valid use ratio? (at least 1/2 keys/ptrs in use for each interior node
-  	
-  		//if (node.info.numkeys<(node.getnumslotsasinterior()/2) ) {return ERROR_INSANE;}
-  		//special case -- one leaf total.
+  	rc = SCIRatio(root);
+  	if(rc){return rc;}
+
 	return ERROR_NOERROR; // If it get's this far, it's passed every test without triggering an error.
 }
 
@@ -930,7 +932,7 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 				if (thiskey < lastkey){
 					return ERROR_INSANE;
 				}
-				cout <<" k: "<<thiskey<<endl;
+// 				cout <<" k: "<<thiskey<<endl;
      		}// iterate through the node up to last key
      	//traverse rightmost ptr
      		//get ptr
@@ -953,16 +955,134 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 				if(thiskey < lastkey) {
 					return ERROR_INSANE;
 				}
-				cout<<"leafkey: "<<thiskey<<endl;
+// 				cout<<"leafkey: "<<thiskey<<endl;
 			}// touch each key in the leaf
 			break;
 	}
 	return ERROR_NOERROR;
 }
 
+ERROR_T BTreeIndex::SCIRatio(const SIZE_T &node) const
+{
+	ERROR_T rc;
+		
+	BTreeNode b;
+	SIZE_T offset;
+	SIZE_T ptr;
+	
+
+	//read the node
+	rc = b.Unserialize(buffercache, node);
+	if (rc) {return rc;}
+
+	
+	switch (b.info.nodetype) { //what are we looking at?
+		case BTREE_ROOT_NODE:
+		case BTREE_INTERIOR_NODE:
+			//first check this node's use ratio
+			cout<<"numkeys: "<<b.info.numkeys<<" numslots: "<<b.info.GetNumSlotsAsLeaf()<<" numslots/2: "<<(b.info.GetNumSlotsAsLeaf()/2)<<endl;
+			if (b.info.numkeys < (b.info.GetNumSlotsAsInterior()/2) ) {
+ 				return ERROR_INSANE;
+ 			}
+			
+    		for (offset=0; offset < b.info.numkeys; offset++) { 
+			//traverse left
+				//get the pointer
+				rc = b.GetPtr(offset, ptr);
+				if(rc){return rc;}
+				
+				//recurse
+				rc = SCIRatio(ptr);
+          		if(rc){return rc;}
+				
+			//touch key this key
+
+     		}//then check all its childnodes
+     	//traverse rightmost ptr
+     		//get ptr
+     		rc=b.GetPtr(b.info.numkeys,ptr);
+			if (rc) { return rc; }
+		
+			//recurse
+			rc = SCIRatio(ptr);
+          	if(rc){return rc;}
+			
+			break;
+			
+		case BTREE_LEAF_NODE:
+// 			cout<<"numkeys: "<<b.info.numkeys<<" numslots: "<<b.info.GetNumSlotsAsLeaf()<<" numslots/2: "<<(b.info.GetNumSlotsAsLeaf()/2)<<endl;
+ 			if (b.info.numkeys < (b.info.GetNumSlotsAsLeaf()/2) ) {
+ 				return ERROR_INSANE;
+ 			}
+			break;
+	}
+	return ERROR_NOERROR;
+}
+
+ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node) const
+{
+	ERROR_T rc;
+	
+	BTreeNode b;
+	SIZE_T offset;
+	int thisdepth;
+	int lastdepth;
+	SIZE_T ptr;
+	
+
+	//read the node
+	rc = b.Unserialize(buffercache, node);
+	if (rc) {return rc;}
+
+	
+	switch (b.info.nodetype) { //what are we looking at?
+		case BTREE_ROOT_NODE:
+		case BTREE_INTERIOR_NODE:
+    		for (offset=0; offset < b.info.numkeys; offset++) { 
+    		//initialize depths
+    			lastdepth = thisdepth;
+    			thisdepth++;
+    		
+			//traverse left
+				rc = b.GetPtr(offset, ptr);//get the pointer
+				if(rc){return rc;}
+				
+				rc = SCIBalanced(ptr);//recurse
+          		if(rc){return rc;}
+				
+			//compare heights
+				if (thisdepth != lastdepth){
+					return ERROR_INSANE;
+				}
+     		}// iterate through the node up to last key
+     	//traverse rightmost ptr
+     		//get ptr
+     		rc=b.GetPtr(b.info.numkeys,ptr);
+			if (rc) { return rc; }
+		
+			//recurse
+			rc = SCIBalanced(ptr);
+          	if(rc){return rc;}
+			
+			break;
+			
+		case BTREE_LEAF_NODE:
+			if (thisdepth != lastdepth)
+			{
+				return ERROR_INSANE;
+			}
+			else{
+				lastdepth = thisdepth;
+			}
+			break;
+	}
+	return ERROR_NOERROR;
+}
+
+
 ostream & BTreeIndex::Print(ostream &os) const
 {
-  // WRITE ME
+	//WRITE ME
       return os;
 }
 
