@@ -879,16 +879,22 @@ ERROR_T BTreeIndex::SanityCheckInternal(const SIZE_T &root) const
 {
 	ERROR_T rc;
 	
-	// Is it a tree? -- check for cycles (unexplored edge leads somewhere explored)
-	// Is BTree sorted?
+// Is BTree sorted?
+	cout<<"Checking if BTree is sorted..."<<endl;
 	rc = SCIOrder(root);
 	if(rc){return rc;}
 	
-  	// Is BTree balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
-//   	rc = SCIBalanced(root);
-//   	if(rc){return rc;}
+// Is BTree balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
+   	cout<<"Checking if BTree is balanced..."<<endl;
+   	int thisdepth = 0;
+  	int lastdepth = 0;
+  	cout<<"*** beforeSCIBalanced ******   thisdepth: "<<thisdepth<<" lastdepth: "<<lastdepth<<endl;
+
+   	rc = SCIBalanced(root, &thisdepth, &lastdepth);
+   	if(rc){return rc;}
   	
-  	// Does each node have a valid use ratio? (at least 1/2 keys/ptrs in use for each interior node
+// Does each node have a valid use ratio? (at least 1/2 keys/ptrs in use for each interior node
+  	cout<<"Checking BTree use ratios..."<<endl;
   	rc = SCIRatio(root);
   	if(rc){return rc;}
 
@@ -896,7 +902,7 @@ ERROR_T BTreeIndex::SanityCheckInternal(const SIZE_T &root) const
 }
 
 ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
-{
+{//Do an In-Order traversal and compare each key to the previous key. if prevkey>thiskey => ERROR.
 	ERROR_T rc;
 	
 	BTreeNode b;
@@ -963,7 +969,7 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 }
 
 ERROR_T BTreeIndex::SCIRatio(const SIZE_T &node) const
-{
+{//Check current node's use ratio, then check the ratio of each child node.
 	ERROR_T rc;
 		
 	BTreeNode b;
@@ -994,8 +1000,6 @@ ERROR_T BTreeIndex::SCIRatio(const SIZE_T &node) const
 				//recurse
 				rc = SCIRatio(ptr);
           		if(rc){return rc;}
-				
-			//touch key this key
 
      		}//then check all its childnodes
      	//traverse rightmost ptr
@@ -1019,16 +1023,16 @@ ERROR_T BTreeIndex::SCIRatio(const SIZE_T &node) const
 	return ERROR_NOERROR;
 }
 
-ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node) const
-{
+ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdepth) const
+{//Do an in-order traversal and check the depth of each leaf, comparing with previous leaf's depth
+ //if thisdepth != lastdepth => ERROR
 	ERROR_T rc;
 	
 	BTreeNode b;
 	SIZE_T offset;
-	int thisdepth;
-	int lastdepth;
 	SIZE_T ptr;
 	
+	cout<<"*** in SCIBalanced ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 
 	//read the node
 	rc = b.Unserialize(buffercache, node);
@@ -1038,22 +1042,17 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node) const
 	switch (b.info.nodetype) { //what are we looking at?
 		case BTREE_ROOT_NODE:
 		case BTREE_INTERIOR_NODE:
+			(*thisdepth)++;
+			cout<<"*** in SCIBalanced after increment ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+
+			
     		for (offset=0; offset < b.info.numkeys; offset++) { 
-    		//initialize depths
-    			lastdepth = thisdepth;
-    			thisdepth++;
-    		
 			//traverse left
 				rc = b.GetPtr(offset, ptr);//get the pointer
 				if(rc){return rc;}
 				
-				rc = SCIBalanced(ptr);//recurse
+				rc = SCIBalanced(ptr, thisdepth, lastdepth);//recurse
           		if(rc){return rc;}
-				
-			//compare heights
-				if (thisdepth != lastdepth){
-					return ERROR_INSANE;
-				}
      		}// iterate through the node up to last key
      	//traverse rightmost ptr
      		//get ptr
@@ -1061,19 +1060,22 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node) const
 			if (rc) { return rc; }
 		
 			//recurse
-			rc = SCIBalanced(ptr);
+			rc = SCIBalanced(ptr, thisdepth, lastdepth);
           	if(rc){return rc;}
 			
 			break;
 			
 		case BTREE_LEAF_NODE:
-			if (thisdepth != lastdepth)
-			{
-				return ERROR_INSANE;
+			//(*thisdepth)++;
+
+			cout<<"At leaf before check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+			if (*lastdepth != 0){
+				if (*thisdepth != *lastdepth){
+					return ERROR_INSANE;
+				}
 			}
-			else{
-				lastdepth = thisdepth;
-			}
+			*lastdepth = *thisdepth;
+			cout<<"At leaf after check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 			break;
 	}
 	return ERROR_NOERROR;
