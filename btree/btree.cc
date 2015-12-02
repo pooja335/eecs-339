@@ -899,7 +899,8 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 	
 	BTreeNode b;
 	SIZE_T offset;
-	KEY_T nextkey;
+	KEY_T thiskey;
+	KEY_T lastkey;
 	SIZE_T ptr;
 	
 
@@ -922,9 +923,14 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
           		if(rc){return rc;}
 				
 			//touch key this key
-				rc = b.GetKey(offset, nextkey);
+				lastkey = thiskey;
+				rc = b.GetKey(offset, thiskey);
 				if(rc){return rc;}
-				cout <<" k: "<<nextkey<<endl;
+				
+				if (thiskey < lastkey){
+					return ERROR_INSANE;
+				}
+				cout <<" k: "<<thiskey<<endl;
      		}// iterate through the node up to last key
      	//traverse rightmost ptr
      		//get ptr
@@ -938,10 +944,16 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 			break;
 			
 		case BTREE_LEAF_NODE:
-			for (offset=0; offset < b.info.numkeys; offset++) { 
-				rc = b.GetKey(offset, nextkey);
+			for (offset=0; offset < b.info.numkeys; offset++) {
+				lastkey = thiskey;
+
+				rc = b.GetKey(offset, thiskey);
 				if (rc) {  return rc; }
-				cout<<"leafkey: "<<nextkey<<endl;
+				
+				if(thiskey < lastkey) {
+					return ERROR_INSANE;
+				}
+				cout<<"leafkey: "<<thiskey<<endl;
 			}// touch each key in the leaf
 			break;
 	}
