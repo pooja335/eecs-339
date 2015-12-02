@@ -244,7 +244,7 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 						return b.GetVal(offset,value);
 					}//BTREE_OP_LOOKUP
 					else { 
-						cout << "GOT TO UPDATE" << endl;	
+						// cout << "GOT TO UPDATE" << endl;	
 						rc = b.SetVal(offset,value);//set the value
 						if (rc) {return rc;}//if unsuccessful, get out
 						return b.Serialize(buffercache, node);// write the updated node
@@ -356,7 +356,7 @@ return ERROR_NOERROR;
 //operations
 ERROR_T BTreeIndex::Lookup(const KEY_T &key, VALUE_T &value)
 {
-	if (key.length != superblock.info.keysize || value.length != superblock.info.valuesize){
+	if (key.length != superblock.info.keysize){
 		return ERROR_SIZE;
 	}// check user input
 	else {
@@ -399,7 +399,7 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
 
         if (rc) { return rc; }
 
-        cout << "Node: " << node << ", key: " << key.data << ", val: " << value.data << endl;
+        // cout << "Node: " << node << ", key: " << key.data << ", val: " << value.data << endl;
 
         // CHECK HERE IF KEYSIZE AND VALUESIZE ARE VALID
         if (b.info.keysize != key.length || b.info.valuesize != value.length) {
@@ -489,7 +489,7 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
                         rc = InsertKeyValueIntoLeaf(b, key, value);
                         if (rc) { return rc; }
                         rc = b.Serialize(buffercache, node);
-                        cout << "inserted keyval" << endl;
+                        // cout << "inserted keyval" << endl;
                         if (rc) { return rc; }
                         if (b.info.numkeys == numLeafSlots) { //SPLIT LEAF NODE CASE
                                 return WARNING_SPLIT; //TELL NODE TO SPLIT
@@ -505,7 +505,7 @@ ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const V
 
 ERROR_T BTreeIndex::SplitRoot(BTreeNode &oldroot, const SIZE_T &oldrootAddress_tmp) 
 {
-        cout << "SPLITTING ROOT" << endl;
+        // cout << "SPLITTING ROOT" << endl;
         ERROR_T rc;
         SIZE_T newroot;
         BTreeNode newrootdata;
@@ -543,7 +543,7 @@ ERROR_T BTreeIndex::Split(BTreeNode &parent, SIZE_T &child, SIZE_T &parentoffset
 
 ERROR_T BTreeIndex::SplitInterior(BTreeNode &parent, BTreeNode &childnode, const SIZE_T &parentAddress, SIZE_T &child, SIZE_T parentoffset) 
 {
-        cout << "SPLITTING INTERIOR" << endl;
+        // cout << "SPLITTING INTERIOR" << endl;
         ERROR_T rc;
         BTreeNode newptrdata;
         SIZE_T offset;
@@ -553,13 +553,13 @@ ERROR_T BTreeIndex::SplitInterior(BTreeNode &parent, BTreeNode &childnode, const
         SIZE_T ii;
 
         offset = (childnode.info.numkeys / 2) + 1; //find where to split
-        cout << "offset: " << offset << endl;
+        // cout << "offset: " << offset << endl;
         // create new interior node
         newptrdata = BTreeNode(BTREE_INTERIOR_NODE, childnode.info.keysize, childnode.info.valuesize, childnode.info.blocksize); 
         rc = AllocateNode(newptr); //allocate space for new interior node
         if (rc) { return rc; }
 
-        cout << "numkeys old: " << childnode.info.numkeys << endl;
+        // cout << "numkeys old: " << childnode.info.numkeys << endl;
         for (ii = offset; ii < childnode.info.numkeys; ii++) { //Move stuff into new node
                 childnode.GetKey(ii, tmpkey);
                 childnode.GetPtr(ii, tmpptr);
@@ -592,7 +592,7 @@ ERROR_T BTreeIndex::SplitInterior(BTreeNode &parent, BTreeNode &childnode, const
 
         //set number of keys to how many we care about - get rid of last key because we insert it one level higher
         childnode.info.numkeys = offset - 1; 
-        cout << "numkeys new: " << childnode.info.numkeys << endl;
+        // cout << "numkeys new: " << childnode.info.numkeys << endl;
 
         childnode.Serialize(buffercache, child);
         newptrdata.Serialize(buffercache, newptr);
@@ -605,7 +605,7 @@ ERROR_T BTreeIndex::SplitInterior(BTreeNode &parent, BTreeNode &childnode, const
 
 ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, BTreeNode &leaf, const SIZE_T &parentAddress, SIZE_T &child, SIZE_T parentoffset) 
 {
-        cout << "SPLITTING LEAF" << endl;
+        // cout << "SPLITTING LEAF" << endl;
         BTreeNode newptrdata;
         SIZE_T newptr;
         SIZE_T offset;
@@ -631,13 +631,13 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, BTreeNode &leaf, const SIZE_T &
                 rc = InsertKeyValueIntoLeaf(newptrdata, tmpkey, tmpvalue); //insert key and value
                 if (rc) { return rc; } 
         }
-        cout << "inserted all leaves" << endl;
+        // cout << "inserted all leaves" << endl;
         leaf.info.numkeys = offset; //set number of keys to how many we care about
         // cout << "numkeys" << leaf.info.numkeys << endl;
 
         // this condition handles case where we aren't splitting rightmost leaf - find offset in interior node
         if (parentoffset < parent.info.numkeys) {
-                cout << "dealing with parent" << endl;
+                // cout << "dealing with parent" << endl;
                 //get highest key of left leaf and insert this key into the parent
                 leaf.GetKey(offset - 1, tmpkey);
                 rc = InsertKeyPtrIntoInterior(parent, tmpkey, child);
@@ -647,7 +647,7 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, BTreeNode &leaf, const SIZE_T &
         }
         // if we are splitting rightmost leaf, we already know where to put the key in the interior node
         else {
-                cout << "dealing with parent" << endl;
+                // cout << "dealing with parent" << endl;
                 parent.info.numkeys++; //add space for extra key
                 //get highest key of left leaf and insert this key and ptr at end of parent
                 leaf.GetKey(offset - 1, tmpkey);
@@ -668,7 +668,7 @@ ERROR_T BTreeIndex::SplitLeaf(BTreeNode &parent, BTreeNode &leaf, const SIZE_T &
 
 ERROR_T BTreeIndex::InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZE_T &ptr) 
 {
-        cout << "inserting" << endl;
+        // cout << "inserting" << endl;
         SIZE_T offset;
         KEY_T testkey;
         SIZE_T testptr;
@@ -680,7 +680,7 @@ ERROR_T BTreeIndex::InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZ
 
         // if it is a brand new node (nothing in it)
         if (oldnumkeys == 0) {
-                cout << "inserting into empty node" << endl;
+                // cout << "inserting into empty node" << endl;
                 b.SetKey(0, key);
                 b.SetPtr(0, ptr);
         }
@@ -689,25 +689,25 @@ ERROR_T BTreeIndex::InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZ
                 rc = b.GetPtr(oldnumkeys, testptr);
                 if (rc) { return rc; }
                 b.SetPtr(b.info.numkeys, testptr);
-                cout << "oldnumkeys: " << oldnumkeys << endl;
+                // cout << "oldnumkeys: " << oldnumkeys << endl;
 
                 // then move everything else into the correct place
                 for (offset = oldnumkeys; offset > 0; offset--) { 
                         rc = b.GetKey(offset - 1, testkey); //testkey now holds value of node's key at offset - 1
                         if (rc) { return rc; }
-                        cout << "testkey: " << testkey.data << endl;
+                        // cout << "testkey: " << testkey.data << endl;
                         if (testkey < key) {
-                                cout << "key is greater than testkey, key: " << key.data << endl;
+                                // cout << "key is greater than testkey, key: " << key.data << endl;
                                 b.SetKey(offset, key);
                                 b.SetPtr(offset, ptr);
                                 break;
                         }
                         else if (key == testkey) {
-                                cout << "key is equal to testkey, key: " << key.data << endl;
+                                // cout << "key is equal to testkey, key: " << key.data << endl;
                                 return ERROR_CONFLICT;
                         }
                         else {
-                                cout << "key is less than testkey, key: " << key.data << endl;
+                                // cout << "key is less than testkey, key: " << key.data << endl;
                                 // move things over to the right
                                 rc = b.GetPtr(offset - 1, testptr);
                                 if (rc) { return rc; }
@@ -735,19 +735,19 @@ ERROR_T BTreeIndex::InsertKeyValueIntoLeaf(BTreeNode &b, const KEY_T &key, const
         for (offset = oldnumkeys; offset > 0; offset--) { 
                 rc = b.GetKey(offset - 1, testkey); //testkey now holds value of node's key at offset - 1
                 if (rc) { return rc; }
-                cout << "testkey: " << testkey.data << endl;
+                // cout << "testkey: " << testkey.data << endl;
                 if (testkey < key) {
-                        cout << "key is greater than testkey, key: " << key.data << endl;
+                        // cout << "key is greater than testkey, key: " << key.data << endl;
                         b.SetKey(offset, key);
                         b.SetVal(offset, value);
                         break;
                 }
                 else if (key == testkey) {
-                        cout << "key is equal to testkey, key: " << key.data << endl;
+                        // cout << "key is equal to testkey, key: " << key.data << endl;
                         return ERROR_CONFLICT;
                 }
                 else {
-                        cout << "key is less than testkey, key: " << key.data << endl;
+                        // cout << "key is less than testkey, key: " << key.data << endl;
                         // move things over to the right
                         rc = b.GetVal(offset - 1, testvalue);
                         if (rc) { return rc; }
