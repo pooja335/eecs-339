@@ -1041,6 +1041,11 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdep
 	
 	switch (b.info.nodetype) { //what are we looking at?
 		case BTREE_ROOT_NODE:
+			if (b.info.numkeys == 0){
+				return ERROR_NOERROR;
+			}//if it's an empty tree, no problem!
+			
+
 		case BTREE_INTERIOR_NODE:
 			(*thisdepth)++;
 			cout<<"*** in SCIBalanced after increment ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
