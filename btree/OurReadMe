@@ -1,0 +1,6 @@
+Team Members:
+Pooja Saxena (pps860)
+Jack Lowrie (jbl851)
+
+We think everything works, except that our sanity check function does not verify that the btree has no cycles, because we couldn't think of an efficient way to check this. We have update and insert working properly. We did not do any extra credit. 
+

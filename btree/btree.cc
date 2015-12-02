@@ -880,21 +880,21 @@ ERROR_T BTreeIndex::SanityCheckInternal(const SIZE_T &root) const
 	ERROR_T rc;
 	
 // Is BTree sorted?
-	cout<<"Checking if BTree is sorted..."<<endl;
+	// cout<<"Checking if BTree is sorted..."<<endl;
 	rc = SCIOrder(root);
 	if(rc){return rc;}
 	
 // Is BTree balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
-   	cout<<"Checking if BTree is balanced..."<<endl;
+   	// cout<<"Checking if BTree is balanced..."<<endl;
    	int thisdepth = 0;
   	int lastdepth = 0;
-  	cout<<"*** beforeSCIBalanced ******   thisdepth: "<<thisdepth<<" lastdepth: "<<lastdepth<<endl;
+  	// cout<<"*** beforeSCIBalanced ******   thisdepth: "<<thisdepth<<" lastdepth: "<<lastdepth<<endl;
 
    	rc = SCIBalanced(root, &thisdepth, &lastdepth);
    	if(rc){return rc;}
   	
 // Does each node have a valid use ratio? (at least 1/2 keys/ptrs in use for each interior node
-  	cout<<"Checking BTree use ratios..."<<endl;
+  	// cout<<"Checking BTree use ratios..."<<endl;
   	rc = SCIRatio(root);
   	if(rc){return rc;}
 
@@ -938,7 +938,7 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 				if (thiskey < lastkey){
 					return ERROR_INSANE;
 				}
-// 				cout <<" k: "<<thiskey<<endl;
+				// cout <<" k: "<<thiskey<<endl;
      		}// iterate through the node up to last key
      	//traverse rightmost ptr
      		//get ptr
@@ -961,7 +961,7 @@ ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
 				if(thiskey < lastkey) {
 					return ERROR_INSANE;
 				}
-// 				cout<<"leafkey: "<<thiskey<<endl;
+				// cout<<"leafkey: "<<thiskey<<endl;
 			}// touch each key in the leaf
 			break;
 	}
@@ -986,7 +986,7 @@ ERROR_T BTreeIndex::SCIRatio(const SIZE_T &node) const
 		case BTREE_ROOT_NODE:
 		case BTREE_INTERIOR_NODE:
 			//first check this node's use ratio
-			cout<<"numkeys: "<<b.info.numkeys<<" numslots: "<<b.info.GetNumSlotsAsLeaf()<<" numslots/2: "<<(b.info.GetNumSlotsAsLeaf()/2)<<endl;
+			// cout<<"numkeys: "<<b.info.numkeys<<" numslots: "<<b.info.GetNumSlotsAsLeaf()<<" numslots/2: "<<(b.info.GetNumSlotsAsLeaf()/2)<<endl;
 			if (b.info.numkeys < (b.info.GetNumSlotsAsInterior()/2) ) {
  				return ERROR_INSANE;
  			}
@@ -1032,7 +1032,7 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdep
 	SIZE_T offset;
 	SIZE_T ptr;
 	
-	cout<<"*** in SCIBalanced ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+	// cout<<"*** in SCIBalanced ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 
 	//read the node
 	rc = b.Unserialize(buffercache, node);
@@ -1048,7 +1048,7 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdep
 
 		case BTREE_INTERIOR_NODE:
 			(*thisdepth)++;
-			cout<<"*** in SCIBalanced after increment ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+			// cout<<"*** in SCIBalanced after increment ******   thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 
 			
     		for (offset=0; offset < b.info.numkeys; offset++) { 
@@ -1073,14 +1073,14 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdep
 		case BTREE_LEAF_NODE:
 			//(*thisdepth)++;
 
-			cout<<"At leaf before check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+			// cout<<"At leaf before check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 			if (*lastdepth != 0){
 				if (*thisdepth != *lastdepth){
 					return ERROR_INSANE;
 				}
 			}
 			*lastdepth = *thisdepth;
-			cout<<"At leaf after check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
+			// cout<<"At leaf after check. thisdepth: "<<*thisdepth<<" lastdepth: "<<*lastdepth<<endl;
 			break;
 	}
 	return ERROR_NOERROR;
@@ -1089,7 +1089,7 @@ ERROR_T BTreeIndex::SCIBalanced(const SIZE_T &node, int *thisdepth, int *lastdep
 
 ostream & BTreeIndex::Print(ostream &os) const
 {
-	//WRITE ME
+        Display (os, BTREE_DEPTH);
       return os;
 }
 
