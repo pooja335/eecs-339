@@ -42,9 +42,7 @@ BTreeIndex::BTreeIndex()
 {
   // shouldn't have to do anything
 }
-//
 // Note, will not attach!
-//
 BTreeIndex::BTreeIndex(const BTreeIndex &rhs)
 {
       buffercache=rhs.buffercache;
@@ -223,7 +221,7 @@ ERROR_T BTreeIndex::LookupOrUpdateInternal(const SIZE_T &node,
 					return LookupOrUpdateInternal(ptr,op,key,value);
      			}
     		}
-    		// if we got here, we need to go to the next pointer, if it exists
+    		// if we got here, we need to go to the rightmost pointer, if it exists
 			if (b.info.numkeys>0) { 
 				rc=b.GetPtr(b.info.numkeys,ptr);
 				if (rc) { return rc; }
@@ -353,7 +351,9 @@ if (dt==BTREE_DEPTH_DOT) {
 return ERROR_NOERROR;
 }
 
-//operations
+
+
+
 ERROR_T BTreeIndex::Lookup(const KEY_T &key, VALUE_T &value)
 {
 	if (key.length != superblock.info.keysize || value.length != superblock.info.valuesize){
@@ -378,13 +378,15 @@ ERROR_T BTreeIndex::Update(const KEY_T &key, const VALUE_T &value)
    	}// execute the update
 }
 
+
+
+
 ERROR_T BTreeIndex::Insert(const KEY_T &key, const VALUE_T &value)
 {
       return InsertInternal(superblock.info.rootnode, key, value);
 }
 
 ERROR_T BTreeIndex::InsertInternal(const SIZE_T &node, const KEY_T &key, const VALUE_T &value)
-
 {
         BTreeNode b; 
         ERROR_T rc;
@@ -781,6 +783,8 @@ ERROR_T BTreeIndex::CreateLeaf(const KEY_T &key, const VALUE_T &value, SIZE_T &n
 }
 
 
+
+
 ERROR_T BTreeIndex::Delete(const KEY_T &key)
 {
   // This is optional extra credit 
@@ -868,14 +872,81 @@ ERROR_T BTreeIndex::Display(ostream &o, BTreeDisplayType display_type) const
 
 ERROR_T BTreeIndex::SanityCheck() const
 {
-  // Is it a tree? -- check for cycles (if unexplored edge leads to visited node before leaves)
-  // Is it in order? -- in-order traversal, then check if they're in order
-  // Is it balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
-  // Does each node have a valid use ratio?
-  return ERROR_UNIMPL;
+  	return SanityCheckInternal(superblock.info.rootnode);
 }
 
+ERROR_T BTreeIndex::SanityCheckInternal(const SIZE_T &root) const
+{
+	ERROR_T rc;
+	
+	// Is it in order?
+	rc = SCIOrder(root);
+	if(rc){return rc;}
+	// Is it a tree? -- check for cycles (unexplored edge leads somewhere explored)
+	
+  	// Is it balanced? -- from root, ensure difference in height of each branch is <=1. iterate.
+  	
+  	// Does each node have a valid use ratio? (at least 1/2 keys/ptrs in use for each interior node
+  	
+  		//if (node.info.numkeys<(node.getnumslotsasinterior()/2) ) {return ERROR_INSANE;}
+  		//special case -- one leaf total.
+	return ERROR_NOERROR; // If it get's this far, it's passed every test without triggering an error.
+}
 
+ERROR_T BTreeIndex::SCIOrder(const SIZE_T &node) const
+{
+	ERROR_T rc;
+	
+	BTreeNode b;
+	SIZE_T offset;
+	KEY_T nextkey;
+	SIZE_T ptr;
+	
+
+	//read the node
+	rc = b.Unserialize(buffercache, node);
+	if (rc) {return rc;}
+
+	
+	switch (b.info.nodetype) { //what are we looking at?
+		case BTREE_ROOT_NODE:
+		case BTREE_INTERIOR_NODE:
+    		for (offset=0; offset < b.info.numkeys; offset++) { 
+			//traverse left
+				//get the pointer
+				rc = b.GetPtr(offset, ptr);
+				if(rc){return rc;}
+				
+				//recurse
+				rc = SCIOrder(ptr);
+          		if(rc){return rc;}
+				
+			//touch key this key
+				rc = b.GetKey(offset, nextkey);
+				if(rc){return rc;}
+				cout <<" k: "<<nextkey<<endl;
+     		}// iterate through the node up to last key
+     	//traverse rightmost ptr
+     		//get ptr
+     		rc=b.GetPtr(b.info.numkeys,ptr);
+			if (rc) { return rc; }
+		
+			//recurse
+			rc = SCIOrder(ptr);
+          	if(rc){return rc;}
+			
+			break;
+			
+		case BTREE_LEAF_NODE:
+			for (offset=0; offset < b.info.numkeys; offset++) { 
+				rc = b.GetKey(offset, nextkey);
+				if (rc) {  return rc; }
+				cout<<"leafkey: "<<nextkey<<endl;
+			}// touch each key in the leaf
+			break;
+	}
+	return ERROR_NOERROR;
+}
 
 ostream & BTreeIndex::Print(ostream &os) const
 {

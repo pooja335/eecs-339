@@ -49,18 +49,18 @@ class BTreeIndex {
 
  protected:
 
-  ERROR_T      AllocateNode(SIZE_T &node);
+  ERROR_T     	AllocateNode(SIZE_T &node);
 
-  ERROR_T      DeallocateNode(const SIZE_T &node);
+  ERROR_T      	DeallocateNode(const SIZE_T &node);
 
-  ERROR_T      LookupOrUpdateInternal(const SIZE_T &Node,
-				      const BTreeOp op, 
-				      const KEY_T &key,
-				      VALUE_T &val);
+  ERROR_T      	LookupOrUpdateInternal(const SIZE_T &Node,
+				      					const BTreeOp op, 
+				      					const KEY_T &key,
+				      					VALUE_T &val);
 
-  ERROR_T      InsertInternal(const SIZE_T &Node, 
-              const KEY_T &key,
-              const VALUE_T &value);
+  ERROR_T      	InsertInternal(const SIZE_T &Node, 
+              					const KEY_T &key,
+              					const VALUE_T &value);
 
   ERROR_T       CreateLeaf(const KEY_T &key, const VALUE_T &value, SIZE_T &newptr);
 
@@ -76,9 +76,12 @@ class BTreeIndex {
 
   ERROR_T       InsertKeyPtrIntoInterior(BTreeNode &b, const KEY_T &key, SIZE_T &ptr);
 
-  ERROR_T      DisplayInternal(const SIZE_T &node,
+  ERROR_T      	DisplayInternal(const SIZE_T &node,
 			       ostream &o, 
 			       const BTreeDisplayType display_type=BTREE_DEPTH) const;
+			       
+  ERROR_T		SanityCheckInternal(const SIZE_T &root) const; //calls a bunch of tests on the btree
+  ERROR_T		SCIOrder(const SIZE_T &node) const;//checks if btree keys are in order
 public:
   //
   // keysize and valueszie should be stored in the 
